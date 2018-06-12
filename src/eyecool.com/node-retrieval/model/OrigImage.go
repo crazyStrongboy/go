@@ -1,6 +1,6 @@
 package model
 
-
+import "time"
 
 type OrigImage struct {
 	Id         int  `json:"id" xorm:"pk autoincr"`
@@ -23,6 +23,7 @@ type OrigImageFull struct {
 	FeatList   string
 	Uuid string
 	CameraId  string
+	ClusterId int
 	ImageName  string
 	ImageRealPath string
 	FaceRect  string
@@ -31,6 +32,7 @@ type OrigImageFull struct {
 	ImageContextPath string
 	FaceImageUri string
 	PictureUri string
+	UpdateTime  time.Time `json:"update_time" xorm:"->"`
 }
 
 

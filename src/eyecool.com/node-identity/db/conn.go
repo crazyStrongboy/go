@@ -67,5 +67,3 @@ func initEngine() error {
 
 	return nil
 }
-
-

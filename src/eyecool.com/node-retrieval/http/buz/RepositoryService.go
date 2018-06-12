@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"eyecool.com/node-retrieval/utils"
+	"eyecool.com/node-retrieval/http/service"
+	"fmt"
 )
 
 type RepositoryRequest struct {
@@ -81,7 +83,7 @@ func InsertRepository(r *RepositoryRequest,user *model.User) *InsertRepositoryRe
 	}
 
 	//库同步
-	/*lifecycleRequest := &model.LifecycleRequest{
+	lifecycleRequest := &model.LifecycleRequest{
 		RepositoryId:ru.Id,
 		Type:0,//0--增加 1--删除
 	}
@@ -92,7 +94,7 @@ func InsertRepository(r *RepositoryRequest,user *model.User) *InsertRepositoryRe
 		result.Rtn=-1
 		result.Message="插入失败"
 		return result
-	}*/
+	}
 
 
 	result.Id=pkId
@@ -114,7 +116,7 @@ func UpdateRepository( r*RepositoryRequest)*model.RespMsg{
 		result.Message="该库已存在"
 		return result
 	}
-	pkId,_,err:=utils.GetClusterIdAndId(r.Id)
+	pkId,_,err:=utils.GetIdAndClusterId(r.Id)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"
@@ -132,7 +134,7 @@ func UpdateRepository( r*RepositoryRequest)*model.RespMsg{
 		return result
 	}
 	//库同步
-	/*lifecycleRequest := &model.LifecycleRequest{
+	lifecycleRequest := &model.LifecycleRequest{
 		RepositoryId:r.Id,
 		Type:0,//0--增加 1--删除
 	}
@@ -143,7 +145,7 @@ func UpdateRepository( r*RepositoryRequest)*model.RespMsg{
 		result.Rtn=-1
 		result.Message="更新失败"
 		return result
-	}*/
+	}
 
 	result.Message="更新成功"
 	result.Rtn=0
@@ -153,7 +155,7 @@ func UpdateRepository( r*RepositoryRequest)*model.RespMsg{
 //删除人像库
 func DeleteRepository (repositoryId string)*model.RespMsg{
 	result:=&model.RespMsg{}
-	id,_,err:=utils.GetClusterIdAndId(repositoryId)
+	id,_,err:=utils.GetIdAndClusterId(repositoryId)
 	//	clusterId,err:=utils.GetClusterId(regionId)
 	if err!=nil{
 		result.Rtn=-1
@@ -168,7 +170,7 @@ func DeleteRepository (repositoryId string)*model.RespMsg{
 		return result
 	}
 	//库同步
-/*	lifecycleRequest := &model.LifecycleRequest{
+	lifecycleRequest := &model.LifecycleRequest{
 		RepositoryId:repositoryId,
 		Type:1,//0--增加 1--删除
 	}
@@ -179,7 +181,7 @@ func DeleteRepository (repositoryId string)*model.RespMsg{
 		result.Rtn=-1
 		result.Message="删除失败"
 		return result
-	}*/
+	}
 
 	result.Rtn=0
 	result.Message="删除成功"

@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"eyecool.com/node-retrieval/global"
 	"eyecool.com/node-retrieval/http/buz"
 )
 
@@ -51,12 +52,19 @@ func (s *RetrievalController) Retrieval(req *restful.Request, rsp *restful.Respo
 	rsp.ResponseWriter.Write([]byte("xxxxxxxxResponseWriter Verify xxxxxxxx"))
 }
 
-func (s *RetrievalController) Verify(req *restful.Request, rsp *restful.Response) {
-	log.Print("Received AccessController.Verify API request")
-	rsp.WriteEntity(map[string]string{
-		"message": "Hi, this is the Verify API",
-	})
-	rsp.ResponseWriter.Write([]byte("xxxxxxxxResponseWriter Verify xxxxxxxx"))
+func (s *RetrievalController) ViewRepos(req *restful.Request, rsp *restful.Response) {
+	log.Print("Received ViewRepos API request")
+	outstr := ""
+	for key, set := range global.G_ReposHandleMap {
+		outstr += fmt.Sprintf(" Repos key : %s len : %d  \r\n  ", key, set.Size())
+	}
+	for key, size := range global.G_ChlFaceX.HandlesCachedSize {
+		outstr += fmt.Sprintf(" ChlFace cached key : %s  cachesize : %d  \r\n  ", key, size)
+	}
+	if outstr == "" {
+		outstr = " cache repos is empty !!!"
+	}
+	rsp.ResponseWriter.Write([]byte(outstr))
 }
 
 type FeatureRequest struct {

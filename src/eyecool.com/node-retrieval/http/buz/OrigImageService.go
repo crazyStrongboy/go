@@ -38,7 +38,7 @@ type OrigResult struct {
 	Gender         int    `json:"gender,omitempty"`
 	IsWritable     bool   `json:"is_writable,omitempty"`
 	Name           string `json:"name,omitempty"`
-	Nation         string `json:"nation,omitempty"`
+	Nation         int `json:"nation"`
 	PersonId       int64  `json:"person_id,omitempty"`
 	RepositoryId   int    `json:"repository_id,omitempty"`
 	CustomField    string `json:"custom_field,omitempty"`
@@ -87,7 +87,7 @@ func (this *OrigImageService) GetCaptureImage(request *OrigImageRequest) *OrigIm
 		}
 		response.NextOffsets = nextOffsets
 		if len(origImages) == 0 {
-			response.Rtn = -1
+			response.Rtn = 0
 			response.Message = "OrigImages is empty！"
 			return response
 		}
@@ -99,13 +99,14 @@ func (this *OrigImageService) GetCaptureImage(request *OrigImageRequest) *OrigIm
 			json.Unmarshal(rectByte, rect)
 
 			for i := 0; i < faceNum; i++ {
-				origResult := new(OrigResult)
-				origResult.FaceImageId = strconv.Itoa(origImage.Id)
-				origResult.CameraId = origImage.CameraId
-				origResult.FaceImageUri = origImage.FaceImageUri
-				origResult.PictureUri = origImage.PictureUri
-				origResult.FaceRect = rect
-				origResult.Timestamp = origImage.Timestamp
+				origResult := &OrigResult{
+					FaceImageId:  strconv.Itoa(origImage.Id),
+					CameraId:     origImage.CameraId,
+					FaceImageUri: origImage.FaceImageUri,
+					PictureUri:   origImage.PictureUri,
+					FaceRect:     rect,
+					Timestamp:    origImage.Timestamp,
+				}
 				results = append(results, origResult)
 			}
 		}

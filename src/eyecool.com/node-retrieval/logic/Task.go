@@ -5,6 +5,7 @@ import (
 	"fmt"
 	. "eyecool.com/node-retrieval/db"
 	"strconv"
+	"log"
 	"github.com/polaris1119/logger"
 )
 
@@ -33,12 +34,12 @@ type Surveillance struct {
 
 
 func (TaskLogic) FindTaskTupleMap( ) map[string][]*model.TaskTuple {
-	objLog := GetLogger(nil)
+
 	fmt.Println("start FindTaskTupleMap....")
 	taskTuples := make([]*model.TaskTuple, 0)
 	err := MasterDB.SQL("SELECT t.id TaskId, t.`name` TaskName ,tc.pk_id TaskChildrenPkId,tc.camera_id CameraId,tc.repository_id RepositoryId,tc.threshold Threshold FROM buz_task  t JOIN buz_task_children tc ON t.pk_id=tc.task_pk_id WHERE t.`status`=0").Find(&taskTuples)
 	if err != nil {
-		objLog.Errorln("TaskLogic FindTask  error:", err)
+		log.Println("TaskLogic FindTask  error:", err)
 		//fmt.Println("TaskLogic taskTuples error : ",err)
 		return nil
 	}
@@ -54,7 +55,7 @@ func (TaskLogic) FindTaskTupleMap( ) map[string][]*model.TaskTuple {
 			result[v.CameraId]=col
 		}
 	}
-	objLog.Println("FindTaskTupleMap : ",result)
+	log.Println("FindTaskTupleMap : ",result)
 	return result
 }
 

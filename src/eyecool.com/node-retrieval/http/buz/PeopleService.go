@@ -59,7 +59,7 @@ type PeopleRequest struct {
 	Region                       int         //区域编号
 	Birthday                     string      //出生日期。格式为"YYYY-mm-dd"， 比如"1990-10-10
 	Gender                       int         //性别。0未知, 1男, 2女
-	Nation                       string      //民族, 见 , 0表示未知
+	Nation                       int      //民族, 见 , 0表示未知
 	Person_id                    string      //证件号可以是18位身份证号或者其他格式的证件号码
 	Options                      string      //建库选项
 	Custom_field                 string      //导图时添加任意多的额外自定义字段。

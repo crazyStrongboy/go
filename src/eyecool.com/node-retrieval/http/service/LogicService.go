@@ -95,6 +95,7 @@ func InsertOrigImage(ctx context.Context, req *model.OrigImageRequest) error {
 	image := &model.OrigImageFull{
 		Uuid:             req.Uuid,
 		CameraId:         req.CameraId,
+		ClusterId:        1,
 		ImageName:        req.ImageName,
 		ImageRealPath:    req.ImageRealPath,
 		FaceNum:          int(req.FaceNum),
@@ -104,6 +105,7 @@ func InsertOrigImage(ctx context.Context, req *model.OrigImageRequest) error {
 		Timestamp:        req.Timestamp,
 		ImageContextPath: req.ImageContextPath,
 		FaceImageUri:     req.FaceImageUri,
+		UpdateTime:       time.Now(),
 	}
 	err := logic.DefaultOrigImageFull.Insert(image)
 	if err != nil {

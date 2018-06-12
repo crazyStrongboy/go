@@ -11,7 +11,7 @@ type People struct {
 	Gender              int
 	Region              int
 	Birthday            string
-	Nation              string
+	Nation              int
 	Options             string
 	PeopleIdType        int
 	PersonId            string

@@ -32,14 +32,6 @@ func GetIdAndClusterId(id string) (groupId int, clusterId int, err error) {
 	return -1, -1, errors.New("GetIdAndClusterId error")
 }
 
-func GetClusterIdAndId(str string) (int, int, error) {
-	m := strings.Split(str, "@")
-	id, err := strconv.Atoi(m[0])
-	clusterId, err := strconv.Atoi(m[1])
-	return id, clusterId, err
-
-}
-
 func MD5(str string) string {
 	md5Ctx := md5.New()
 	md5Ctx.Write([]byte(str))

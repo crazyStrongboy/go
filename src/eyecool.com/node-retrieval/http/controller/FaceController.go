@@ -14,9 +14,23 @@ import (
 	"encoding/base64"
 	"time"
 	"eyecool.com/node-retrieval/utils"
+	. "github.com/polaris1119/config"
 )
 
-var SurveillanceUrl = "http://192.168.0.192:8091/surveillance/api/feature/match"
+var G_ProducerSuveillanceUrl = ""
+
+func init() {
+	producerSuveillanceUrl, err := ConfigFile.GetValue("producer", "http_srv")
+	if err != nil {
+		log.Fatalf("producer  http_srv is not found !!!")
+	}
+	pushPattern, err := ConfigFile.Bool("global", "open_push_pattern")
+	if err != nil {
+		log.Fatalf("global  open_push_pattern is not found !!!")
+	}
+	G_ProducerSuveillanceUrl = fmt.Sprintf("http://%s/surveillance/api/feature/match", producerSuveillanceUrl)
+	global.G_Push_Pattern = pushPattern
+}
 
 type FaceController struct {
 }
@@ -87,7 +101,7 @@ func (s *FaceController) pushToSurveillance(oi *model.OrigImageRequest) {
 		imageSourceBytes, _ := json.Marshal(imageSource)
 		fmt.Println("DoBytesPost imageSourceBytes len : ", len(imageSourceBytes), "  featureBufs len :", len(featureBufs))
 		//kafka
-		_, err := utils.DoBytesPost(SurveillanceUrl, imageSourceBytes)
+		_, err := utils.DoBytesPost(G_ProducerSuveillanceUrl, imageSourceBytes)
 		if err != nil {
 			fmt.Println("byte err : ", err)
 		}

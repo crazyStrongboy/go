@@ -64,7 +64,7 @@ type RetrievalResult struct {
 	Gender         int    `json:"gender,omitempty"`
 	IsWritable     bool   `json:"is_writable,omitempty"`
 	Name           string `json:"name,omitempty"`
-	Nation         string `json:"nation,omitempty"`
+	Nation         int `json:"nation"`
 	PersonId       string `json:"person_id,omitempty"`
 	CustomField    string `json:"custom_field,omitempty"`
 	RepositoryId   string `json:"repository_id,omitempty"`

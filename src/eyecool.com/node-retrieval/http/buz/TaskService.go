@@ -57,8 +57,8 @@ func InsertTask(t *TaskRequest) *InsertTaskResponse{
 	result:=&InsertTaskResponse{}
 	requests:=t.Requests
 	for _,v:=range requests{
-		cameraId,_,err:=utils.GetClusterIdAndId(v.CameraId)
-		repositoryId,_,err:=utils.GetClusterIdAndId(v.RepositoryId)
+		cameraId,_,err:=utils.GetIdAndClusterId(v.CameraId)
+		repositoryId,_,err:=utils.GetIdAndClusterId(v.RepositoryId)
 		if err !=nil{
 			result.Rtn=-1
 			result.Message="参数错误"
@@ -109,7 +109,7 @@ func InsertTask(t *TaskRequest) *InsertTaskResponse{
 	for _,v:=range requests{
 		//判断子任务是否存在
 		flag,taskChildren:=logic.DefaultTaskChildren.SelectTaskChildren(v.CameraId,v.RepositoryId)
-		cameraId,cId,_:=utils.GetClusterIdAndId(v.CameraId)
+		cameraId,cId,_:=utils.GetIdAndClusterId(v.CameraId)
 		if flag{
 			//存在
 			taskChildren.Status=0
@@ -175,7 +175,7 @@ func InsertTask(t *TaskRequest) *InsertTaskResponse{
 
 func DeleteTask(id string)*model.RespMsg{
 	result:=&model.RespMsg{}
-	taskId,_,err:=utils.GetClusterIdAndId(id)
+	taskId,_,err:=utils.GetIdAndClusterId(id)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"
@@ -239,7 +239,7 @@ func QueryTask()*TaskResponse{
 
 func UpdateTask(request *TaskUpdateRequest)*model.RespMsg{
 	result:=&model.RespMsg{}
-	pkId,_,err:=utils.GetClusterIdAndId(request.Id)
+	pkId,_,err:=utils.GetIdAndClusterId(request.Id)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"

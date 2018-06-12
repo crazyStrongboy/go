@@ -74,7 +74,7 @@ func UpdateVideo(v *VideoRequest)*model.RespMsg{
 		result.Rtn=-1
 		return result
 	}
-	pkId,clusterId,err:=utils.GetClusterIdAndId(v.Id)
+	pkId,clusterId,err:=utils.GetIdAndClusterId(v.Id)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"
@@ -103,7 +103,7 @@ func UpdateVideo(v *VideoRequest)*model.RespMsg{
 
 func DeleteVideo(id string)*model.RespMsg{
 	result:=&model.RespMsg{}
-	pkId,_,err:=utils.GetClusterIdAndId(id)
+	pkId,_,err:=utils.GetIdAndClusterId(id)
 	video:=&model.Video{
 		PkId:pkId,
 	}

@@ -14,6 +14,12 @@ type CameraResponse struct {
 	Rtn int `json:"rtn"`
 	Message string `json:"message"`
 }
+//插入返回
+type InsertCameraResponse struct {
+	Id string `json:"id"`
+	Rtn int `json:"rtn"`
+	Message string `json:"message"`
+}
 //请求对象
 type CameraRequest struct {
 	Id string 	`json:"id"`
@@ -36,8 +42,8 @@ func CameraQuery()*CameraResponse{
 	return result
 }
 //插入摄像机
-func InsertCamera(camera *CameraRequest,user *model.User)*CameraResponse{
-	result:=&CameraResponse{}
+func InsertCamera(camera *CameraRequest,user *model.User)*InsertCameraResponse{
+	result:=&InsertCameraResponse{}
 	flag:=logic.DefaultCamera.FindIP(camera.Ip)
 	if !flag{
 		regionId,_:=strconv.Atoi(camera.PredecessorId)
@@ -88,7 +94,7 @@ func InsertCamera(camera *CameraRequest,user *model.User)*CameraResponse{
 			return result
 		}
 
-	//	result=c.PkId
+		//	result=c.PkId
 		result.Rtn=0
 		result.Message="新增成功！"
 		return result
@@ -100,9 +106,9 @@ func InsertCamera(camera *CameraRequest,user *model.User)*CameraResponse{
 
 }
 //删除摄像机
-func DeleteCamera(id string)*CameraResponse{
-	result:=&CameraResponse{}
-	cameraId,_,err:=utils.GetClusterIdAndId(id)
+func DeleteCamera(id string)*model.RespMsg{
+	result:=&model.RespMsg{}
+	cameraId,_,err:=utils.GetIdAndClusterId(id)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误！"
@@ -123,9 +129,9 @@ func DeleteCamera(id string)*CameraResponse{
 
 
 //更新摄像机
-func UpdateCamera(camera *CameraRequest) *CameraResponse{
-	result:=&CameraResponse{}
-	id,_,err:=utils.GetClusterIdAndId(camera.Id)
+func UpdateCamera(camera *CameraRequest) *model.RespMsg{
+	result:=&model.RespMsg{}
+	id,_,err:=utils.GetIdAndClusterId(camera.Id)
 	//clusterId,err:=utils.GetClusterId(camera.Id)
 	if err!=nil{
 		result.Rtn=-1

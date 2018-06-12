@@ -14,7 +14,7 @@ type ImageFail struct {
 	Gender           int
 	Region           int
 	Birthday         string
-	Nation           string
+	Nation           int
 	Options          string
 	PersonId         string
 	CreatorId        int

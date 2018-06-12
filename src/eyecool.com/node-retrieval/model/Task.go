@@ -37,6 +37,9 @@ type TaskChildren struct {
 	TaskId   string
 	CameraId   string
 	CameraIp     string
+	Name         string
+	TaskPkId     int
+	CameraPkId   int
 	RepositoryId string
 	Threshold    float64
 	ExtraMeta    string

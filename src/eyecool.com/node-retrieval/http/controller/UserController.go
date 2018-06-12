@@ -130,6 +130,12 @@ func (this *UserController) InsertOrUpdateUser(req *restful.Request, rsp *restfu
 		if err != nil {
 			response.Rtn = -1
 			response.Message = "id不正确!"
+			rsp.Header().Set("Access-Control-Allow-Origin", "*")
+			rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
+			rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
+			rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+			responseBytes, _ := json.Marshal(response)
+			rsp.ResponseWriter.Write(responseBytes)
 			return
 		}
 	}

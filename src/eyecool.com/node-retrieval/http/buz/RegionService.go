@@ -46,7 +46,7 @@ func QueryRegion() *RegionResponse{
 //插入摄像头区域
 func InsertRegion(region *RegionRequest) *InsertRegionResponse{
 	result:=&InsertRegionResponse{}
-	parentId,clusterId,err:=utils.GetClusterIdAndId(region.PredecessorId)
+	parentId,clusterId,err:=utils.GetIdAndClusterId(region.PredecessorId)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"
@@ -79,7 +79,7 @@ func InsertRegion(region *RegionRequest) *InsertRegionResponse{
 //更新摄像头区域
 func UpdateRegion (region *RegionRequest)*model.RespMsg{
 	result:=&model.RespMsg{}
-	id,clusterId,err:=utils.GetClusterIdAndId(region.Id)
+	id,clusterId,err:=utils.GetIdAndClusterId(region.Id)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"
@@ -105,7 +105,7 @@ func UpdateRegion (region *RegionRequest)*model.RespMsg{
 //删除摄像头区域
 func DeleteRegion (regionId string)*model.RespMsg{
 	result:=&model.RespMsg{}
-	id,_,err:=utils.GetClusterIdAndId(regionId)
+	id,_,err:=utils.GetIdAndClusterId(regionId)
 	if err!=nil{
 		result.Rtn=-1
 		result.Message="参数错误"
