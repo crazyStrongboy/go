@@ -19,7 +19,7 @@ func StartWebService() {
 	ws.Produces(restful.MIME_JSON, restful.MIME_XML)
 	ws.Path("/identity")
 	ws.Route(ws.POST("/verification").To(identityController.UploadIdCard))
-	ws.Route(ws.POST("/heartbeat").To(heartController.HeartBeart))
+	ws.Route(ws.POST("/heartbeat").To(heartController.HeartBeat))
 	wc.Add(ws)
 
 	host, err := ConfigFile.GetValue("listen", "host")
