@@ -26,10 +26,9 @@ func (this *UserController) GetSelf(req *restful.Request, rsp *restful.Response)
 		fmt.Println("GetSelf Unmarshal User err : ", err, ":", user)
 		response.Rtn = -1
 		response.Message = err.Error()
-		rsp.Header().Set("Access-Control-Allow-Origin", "*")
-		rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-		rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-		rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
 		return
 	}
 	result := userService.Login(user)
@@ -40,10 +39,7 @@ func (this *UserController) GetSelf(req *restful.Request, rsp *restful.Response)
 		response = userService.RespLoginResult(result)
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }
@@ -64,10 +60,7 @@ func (this *UserController) GetSelfInfo(req *restful.Request, rsp *restful.Respo
 		response.Message = "用户未登入!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }
@@ -84,10 +77,7 @@ func (this *UserController) GetTopUserAndTopGroup(req *restful.Request, rsp *res
 		response.Message = "用户未登入!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }
@@ -109,10 +99,7 @@ func (this *UserController) GetDepthUserAndTopGroup(req *restful.Request, rsp *r
 		response.Message = "用户未登入!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }
@@ -125,15 +112,21 @@ func (this *UserController) InsertOrUpdateUser(req *restful.Request, rsp *restfu
 	user := new(model.User)
 	body, _ := ioutil.ReadAll(req.Request.Body)
 	err := json.Unmarshal(body, &params)
+	if err != nil {
+		fmt.Println("InsertOrUpdateUser Unmarshal User err : ", err)
+		response.Rtn = -1
+		response.Message = err.Error()
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
+		return
+	}
 	if v, f := params["id"]; f {
 		user.Id, err = strconv.Atoi(v)
 		if err != nil {
 			response.Rtn = -1
 			response.Message = "id不正确!"
-			rsp.Header().Set("Access-Control-Allow-Origin", "*")
-			rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-			rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-			rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+			SetResponse(rsp)
 			responseBytes, _ := json.Marshal(response)
 			rsp.ResponseWriter.Write(responseBytes)
 			return
@@ -143,18 +136,7 @@ func (this *UserController) InsertOrUpdateUser(req *restful.Request, rsp *restfu
 	user.ExtraMeta = params["extra_meta"]
 	user.Predecessor_id = params["predecessor_id"]
 	user.Password = params["password"]
-	if err != nil {
-		fmt.Println("InsertOrUpdateUser Unmarshal User err : ", err)
-		response.Rtn = -1
-		response.Message = err.Error()
-		rsp.Header().Set("Access-Control-Allow-Origin", "*")
-		rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-		rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-		rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
-		responseBytes, _ := json.Marshal(response)
-		rsp.ResponseWriter.Write(responseBytes)
-		return
-	}
+
 	sessionId := req.HeaderParameter("session_id")
 	sessionUser := cacheMap.GetUserSession(sessionId)
 	if sessionUser != nil {
@@ -170,10 +152,7 @@ func (this *UserController) InsertOrUpdateUser(req *restful.Request, rsp *restfu
 		response.Message = "用户未登录!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 
@@ -193,10 +172,7 @@ func (this *UserController) DeleteUser(req *restful.Request, rsp *restful.Respon
 		response.Message = "用户未登录!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }

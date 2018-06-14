@@ -23,7 +23,7 @@ type ImageFailResponse struct {
 type ImageFailResult struct {
 	PictureUri    string `json:"picture_uri,omitempty"`    //导入图片的 uri
 	FailedMessage string `json:"failed_message,omitempty"` //失败原因
-	FailedRtn     int    `json:"failed_rtn,omitempty"`     //失败错误码
+	FailedRtn     int    `json:"failed_rtn"`     //失败错误码
 }
 type ImageFailResults []*ImageFailResult
 

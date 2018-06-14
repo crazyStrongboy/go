@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"fmt"
 	"eyecool.com/node-retrieval/logic"
+	"errors"
 )
 
 type UserGroupService struct {
@@ -21,6 +22,12 @@ type UserGroupResponse struct {
 var userGroupLogic = new(logic.UserGroupLogic)
 
 func (this *UserGroupService) UpdateUserGroup(group *model.UserGroup, response *UserGroupResponse) {
+	has,_:=userGroupLogic.FindGroupById(group.Id)
+	if !has {
+		response.Rtn = 0
+		response.Message = "该用户组不存在!"
+		return
+	}
 	group.UpdateTime = time.Now()
 	err := userGroupLogic.UpdateUserGroup(group)
 	if err != nil {
@@ -34,6 +41,11 @@ func (this *UserGroupService) UpdateUserGroup(group *model.UserGroup, response *
 }
 
 func (this *UserGroupService) InsertUserGroup(group *model.UserGroup, response *UserGroupResponse) {
+	if group.Name == "" {
+		response.Rtn = -1
+		response.Message = "name不能为空!"
+		return
+	}
 	predecessor_id := group.Predecessor_id
 	parentId, clusterId, err := utils.GetIdAndClusterId(predecessor_id)
 	if err != nil {
@@ -44,7 +56,7 @@ func (this *UserGroupService) InsertUserGroup(group *model.UserGroup, response *
 	if parentId == -2 {
 		group.GroupLevel = 0
 	} else {
-		existGroup := userGroupLogic.SelectGroupById(parentId)
+		_,existGroup := userGroupLogic.FindGroupById(parentId)
 		group.GroupLevel = existGroup.GroupLevel + 1
 		group.ParentId = parentId
 	}
@@ -76,7 +88,7 @@ func (this *UserGroupService) DeleteUserGroup(param string) *UserGroupResponse {
 	if err != nil {
 		fmt.Println("DeleteUserGroup:", err)
 		response.Rtn = -1
-		response.Message = "参数错误!"
+		response.Message = err.Error()
 		return response
 	}
 	response.Rtn = 0
@@ -84,9 +96,9 @@ func (this *UserGroupService) DeleteUserGroup(param string) *UserGroupResponse {
 	return response
 }
 func deleteUserGroupAndUser(parentId int) error {
-	groups, err := userGroupLogic.SelectByParentId(parentId)
+	groups, err := userGroupLogic.FindByParentId(parentId)
 	if err != nil {
-		return err
+		return errors.New("参数错误!")
 	}
 	if len(groups) > 0 {
 		for _, v := range groups {
@@ -97,6 +109,8 @@ func deleteUserGroupAndUser(parentId int) error {
 			userLogic.UpdateStatusByGroupId(groupId, 2)
 			deleteUserGroupAndUser(groupId)
 		}
+	}else{
+		return errors.New("该用户已删除!")
 	}
 	return nil
 }

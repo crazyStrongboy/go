@@ -31,7 +31,7 @@ func StartWebService() {
 	ws1.Produces(restful.MIME_JSON, restful.MIME_XML)
 	ws1.Path("/business/api")
 	ws1.Route(ws1.GET("/").To(accessctl.Anything))
-	ws1.Route(ws1.POST("/face/verify").To(facectl.Verify))
+	//ws1.Route(ws1.POST("/face/verify").To(facectl.Verify))
 	ws1.Route(ws1.POST("/face/insert_orig_image").To(facectl.InsertOrigImage))
 	//ws1.Route(ws1.POST("/retrieval").To(retrievalctl.Retrieval))
 	ws1.Route(ws1.POST("/retrieval/repository_feature_insert").To(retrievalctl.RepositoryFeatureInsert))
@@ -46,6 +46,7 @@ func StartWebService() {
 	origController := new(controller.OrigImageController)
 	retrievalController := new(controller.RetrievalController)
 	imageFailController := new(controller.ImageFailController)
+	alarmController := new(controller.AlarmController)
 	ws1.Route(ws1.POST("/login").To(userController.GetSelf))
 	ws1.Route(ws1.GET("/user/self").To(userController.GetSelfInfo))
 	ws1.Route(ws1.GET("/user/top").To(userController.GetTopUserAndTopGroup))
@@ -64,6 +65,7 @@ func StartWebService() {
 	ws1.Route(ws1.POST("/retrieval").To(retrievalController.PictureSynchronized))
 	ws1.Route(ws1.POST("/condition/query").To(retrievalController.ConditionQuery))
 	ws1.Route(ws1.POST("/repository/picture/failed").To(imageFailController.GetFailImage))
+	ws1.Route(ws1.POST("/hit/alert").To(alarmController.HitAlert))
 
 	camera := new(controller.CameraController)
 	region := new(controller.RegionController)
@@ -97,6 +99,7 @@ func StartWebService() {
 	ws1.Route(ws1.POST("/surveillance/task").To(task.InsertTask))
 	ws1.Route(ws1.DELETE("/surveillance/task").To(task.DeleteTask))
 	ws1.Route(ws1.PUT("/surveillance/task").To(task.UpdateTask))
+	ws1.Route(ws1.POST("/surveillance/task/children/delete").To(task.DeleteChildTask))
 	wc.Add(ws1)
 
 	host, err := ConfigFile.GetValue("listen", "host")

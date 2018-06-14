@@ -44,7 +44,7 @@ func (s *FaceController) Verify(req *restful.Request, rsp *restful.Response) {
 }
 
 func (this *FaceController) InsertOrigImage(req *restful.Request, rsp *restful.Response) {
-	log.Print("Received FaceController.InsertOrigImage API request : ", req.Request.RemoteAddr)
+	log.Printf("addr %s url path:%v\n", req.Request.RemoteAddr, req.Request.URL)
 	oi := model.OrigImageRequest{}
 	body, _ := ioutil.ReadAll(req.Request.Body)
 	err := json.Unmarshal(body, &oi)
@@ -83,7 +83,7 @@ func (s *FaceController) pushToSurveillance(oi *model.OrigImageRequest) {
 			}
 			featureBufs = append(featureBufs[:], featBytes[:]...)
 		}
-		imageSource := &model.ImageSource{
+		imageSource := model.ImageSource{
 			Type:              global.Type_Feature, // 0:image ,1:feature
 			CameraId:          oi.CameraId,
 			CameraIp:          oi.CameraIp,
@@ -96,9 +96,10 @@ func (s *FaceController) pushToSurveillance(oi *model.OrigImageRequest) {
 			OrigImageUuid:     oi.Uuid,
 			FaceNum:           int(oi.FaceNum),
 			FaceRects:         oi.FaceRect,
+			FaceProp:          oi.FaceProp,
 			FaceFeatureBufs:   featureBufs,
 		}
-		imageSourceBytes, _ := json.Marshal(imageSource)
+		imageSourceBytes, _ := json.Marshal(&imageSource)
 		fmt.Println("DoBytesPost imageSourceBytes len : ", len(imageSourceBytes), "  featureBufs len :", len(featureBufs))
 		//kafka
 		_, err := utils.DoBytesPost(G_ProducerSuveillanceUrl, imageSourceBytes)

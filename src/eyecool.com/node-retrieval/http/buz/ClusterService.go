@@ -19,7 +19,7 @@ var clusterLogic = new(logic.ClusterLogic)
 func (this *ClusterService) GetClusterArray() *ClusterResponse {
 	response := new(ClusterResponse)
 	clusterIds := make([]*string, 0)
-	clusterIntIds := clusterLogic.GetClusterArray()
+	clusterIntIds := clusterLogic.FindClusters()
 	if len(clusterIntIds) > 0 {
 		for _, v := range clusterIntIds {
 			clusterId := strconv.Itoa(v)

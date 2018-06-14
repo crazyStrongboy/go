@@ -2,14 +2,14 @@ package global
 
 import (
 	"eyecool.com/node-retrieval/model"
+	"github.com/polaris1119/set"
 	"eyecool.com/node-retrieval/algorithm"
 	"fmt"
-	"github.com/labstack/gommon/log"
-	"bytes"
-	"encoding/base64"
-	"github.com/polaris1119/set"
 	"eyecool.com/node-retrieval/logic"
 	"time"
+	"encoding/base64"
+	"log"
+	"bytes"
 )
 
 const (

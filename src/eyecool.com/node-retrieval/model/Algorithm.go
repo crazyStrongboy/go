@@ -24,6 +24,7 @@ type ImageSource struct {
 	FACE_DETECT_RESULTS []FACE_DETECT_RESULT
 	FaceFeatureBufs     []byte
 	FaceRects           string
+	FaceProp            string
 	FaceFeatureBufsB64  string
 }
 

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"eyecool.com/node-retrieval/utils"
+	"eyecool.com/node-retrieval/model"
 )
 
 type OrigImageService struct {
@@ -27,21 +28,21 @@ type OrigImageRequest struct {
 	Extra_fields  []string //导图时导入自定义字段，在检索结果中显示相关字段
 }
 type OrigResult struct {
-	FaceImageId    string `json:"face_image_id,omitempty"`  //过人id($编号@$集群号)
-	CameraId       string `json:"camera_id,omitempty"`      //摄像头编号 ($编号@$集群号)
-	FaceImageUri   string `json:"face_image_uri,omitempty"` //人脸图URI
-	PictureUri     string `json:"picture_uri,omitempty"`    //场景图URI
-	FaceRect       *Rect  `json:"face_rect,omitempty"`      //人脸框
-	Timestamp      int64  `json:"timestamp,omitempty"`      //过人的时间戳
-	BornYear       string `json:"born_year,omitempty"`
-	FaceImageIdStr string `json:"face_image_id_str,omitempty"`
-	Gender         int    `json:"gender,omitempty"`
-	IsWritable     bool   `json:"is_writable,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Nation         int `json:"nation"`
-	PersonId       int64  `json:"person_id,omitempty"`
-	RepositoryId   int    `json:"repository_id,omitempty"`
-	CustomField    string `json:"custom_field,omitempty"`
+	FaceImageId    string      `json:"face_image_id,omitempty"`  //过人id($编号@$集群号)
+	CameraId       string      `json:"camera_id,omitempty"`      //摄像头编号 ($编号@$集群号)
+	FaceImageUri   string      `json:"face_image_uri,omitempty"` //人脸图URI
+	PictureUri     string      `json:"picture_uri"`    //场景图URI
+	FaceRect       *model.Rect `json:"face_rect,omitempty"`      //人脸框
+	Timestamp      int64       `json:"timestamp,omitempty"`      //过人的时间戳
+	BornYear       string      `json:"born_year,omitempty"`
+	FaceImageIdStr string      `json:"face_image_id_str,omitempty"`
+	Gender         int         `json:"gender,omitempty"`
+	IsWritable     bool        `json:"is_writable,omitempty"`
+	Name           string      `json:"name,omitempty"`
+	Nation         int         `json:"nation"`
+	PersonId       int64       `json:"person_id,omitempty"`
+	RepositoryId   int         `json:"repository_id,omitempty"`
+	CustomField    string      `json:"custom_field,omitempty"`
 }
 type OrigImageResponse struct {
 	Rtn         int           `json:"rtn"`                    //错误码
@@ -94,9 +95,8 @@ func (this *OrigImageService) GetCaptureImage(request *OrigImageRequest) *OrigIm
 		for _, origImage := range origImages {
 			faceNum := origImage.FaceNum
 			faceRect := origImage.FaceRect
-			rect := new(Rect)
-			rectByte, _ := json.Marshal(faceRect)
-			json.Unmarshal(rectByte, rect)
+			rect := new(model.Rect)
+			json.Unmarshal([]byte(faceRect), rect)
 
 			for i := 0; i < faceNum; i++ {
 				origResult := &OrigResult{
@@ -136,13 +136,8 @@ func (this *OrigImageService) GetSingleImage(request *OrigImageRequest) *OrigIma
 			origResult.BornYear = people.Birthday
 			origResult.FaceImageId = request.Face_image_id
 			origResult.FaceImageIdStr = request.Face_image_id
-
-			rect := &Rect{
-				X: feature.X,
-				Y: feature.Y,
-				H: feature.H,
-				W: feature.W,
-			}
+			rect := new(model.Rect)
+			json.Unmarshal([]byte(feature.FaceRect), rect)
 			origResult.FaceRect = rect
 			origResult.Gender = people.Gender
 			origResult.IsWritable = false

@@ -19,7 +19,7 @@ func (this *RepositoryController) QueryRepository(req *restful.Request,res *rest
 	cacheMap:=utils.CacheMap{}
 	//判断用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&buz.RepositoryResponse{}
 	if flag{
 		//查询数据库
@@ -30,10 +30,7 @@ func (this *RepositoryController) QueryRepository(req *restful.Request,res *rest
 		result.Message="用户未登录"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }
@@ -44,7 +41,7 @@ func (this *RepositoryController)InsertRepository(req *restful.Request,res *rest
 	cacheMap:=utils.CacheMap{}
 	//检查用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&buz.InsertRepositoryResponse{}
 	if flag{
 		user:=cacheMap.GetUserSession(sessionId)
@@ -57,18 +54,20 @@ func (this *RepositoryController)InsertRepository(req *restful.Request,res *rest
 			result.Rtn=-1
 			result.Message="参数错误！"
 		}else{
-			//入库
-			result=buz.InsertRepository(&r,user)
+			if r.Name == "" {
+				result.Rtn=-1
+				result.Message="name为空！"
+			}else {
+				//入库
+				result=buz.InsertRepository(&r,user)
+			}
 		}
 	}else{
 		result.Rtn=-1
 		result.Message="用户未登录"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 
@@ -80,7 +79,7 @@ func (this *RepositoryController)UpdateRepository(req *restful.Request,res *rest
 	cacheMap:=utils.CacheMap{}
 	//检查用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&model.RespMsg{}
 	if flag{
 		r:=buz.RepositoryRequest{}
@@ -100,10 +99,7 @@ func (this *RepositoryController)UpdateRepository(req *restful.Request,res *rest
 
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }
@@ -113,7 +109,7 @@ func (this *RepositoryController) DeleteRepository(req *restful.Request,res *res
 	sessionId:=req.HeaderParameter("session_id")
 	cacheMap:=utils.CacheMap{}
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&model.RespMsg{}
 	if flag{
 		m:=req.Request.URL.Query()
@@ -126,10 +122,7 @@ func (this *RepositoryController) DeleteRepository(req *restful.Request,res *res
 	}
 
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }

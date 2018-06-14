@@ -34,12 +34,11 @@ func (RepositoryLogic) FindAll() []*model.Repository {
 }
 
 func (RepositoryLogic) QueryRepository() ([]*Result, error) {
-	objLog := GetLogger(nil)
 	results := make([]*Result, 0)
 	repositorys := make([]*model.Repository, 0)
 	err := MasterDB.Where("status=0").Find(&repositorys)
 	if err != nil {
-		objLog.Errorln("AdLogic FindAll PageAd error:", err)
+		log.Println("AdLogic FindAll PageAd error:", err)
 		return nil, err
 	}
 	for _, v := range repositorys {
@@ -59,12 +58,11 @@ func (RepositoryLogic) QueryRepository() ([]*Result, error) {
 }
 
 //查询该库是否存在
-func (RepositoryLogic) SelectByName(name string) bool {
-	objLog := GetLogger(nil)
+func (RepositoryLogic) FindByName(name string) bool {
 	repository := model.Repository{}
 	flag, err := MasterDB.Where("name=? and status=0", name).Get(&repository)
 	if err != nil {
-		objLog.Errorln("AdLogic FindAll PageAd error:", err)
+		log.Println("AdLogic FindAll PageAd error:", err)
 		return false
 	}
 	return flag
@@ -72,14 +70,14 @@ func (RepositoryLogic) SelectByName(name string) bool {
 
 //插入
 func (RepositoryLogic) InsertRepository(repository *model.Repository) error {
-	logger := GetLogger(nil)
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
 	_, err := MasterDB.Insert(repository)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("insert alarmInfo error:", err)
+		session.Commit()
+		log.Println("insert alarmInfo error:", err)
 		return err
 	}
 	session.Commit()
@@ -88,14 +86,14 @@ func (RepositoryLogic) InsertRepository(repository *model.Repository) error {
 }
 
 func (RepositoryLogic) UpdateRepository(repository *model.Repository) error {
-	logger := GetLogger(nil)
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
-	_, err := MasterDB.Where("pk_id=?", repository.PkId).Update(repository)
+	_, err := MasterDB.Where("pk_id=?", repository.PkId).Cols("extra_meta").Update(repository)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("Update Repository error:", err)
+		session.Commit()
+		log.Println("Update Repository error:", err)
 		return err
 	}
 	session.Commit()
@@ -103,7 +101,6 @@ func (RepositoryLogic) UpdateRepository(repository *model.Repository) error {
 }
 
 func (RepositoryLogic) DeleteRepository(id int) error {
-	logger := GetLogger(nil)
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
@@ -116,7 +113,8 @@ func (RepositoryLogic) DeleteRepository(id int) error {
 	_, err := MasterDB.Where("pk_id=?", r.PkId).Update(r)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("delete Repository error:", err)
+		session.Commit()
+		log.Println("delete Repository error:", err)
 		return err
 	}
 	//删除库下面的所有people
@@ -128,25 +126,25 @@ func (RepositoryLogic) DeleteRepository(id int) error {
 	_, err = MasterDB.Where("repository_pk_id=?", people.RepositoryPkId).Update(people)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("delete people error:", err)
+		session.Commit()
+		log.Println("delete people error:", err)
 		return err
 	}
 	session.Commit()
 	return nil
 }
 
-func (RepositoryLogic) SelectRepositoryById(id int) bool {
-	objLog := GetLogger(nil)
+func (RepositoryLogic) FindRepositoryById(id int) bool {
 	repository := model.Repository{}
 	flag, err := MasterDB.Where("id=? and status=0", id).Get(&repository)
 	if err != nil {
-		objLog.Errorln("RepositoryLogic selectRepositoryById PageAd error:", err)
+		log.Println("RepositoryLogic selectRepositoryById PageAd error:", err)
 		return false
 	}
 	return flag
 }
 
-func (this *RepositoryLogic) SelectByPrimaryKey(id int) (bool, *model.Repository) {
+func (this *RepositoryLogic) FindByPrimaryKey(id int) (bool, *model.Repository) {
 	repository := new(model.Repository)
 	has, _ := MasterDB.ID(id).Get(repository)
 	//fmt.Println(repository)
@@ -154,14 +152,13 @@ func (this *RepositoryLogic) SelectByPrimaryKey(id int) (bool, *model.Repository
 }
 
 func (this *RepositoryLogic) InsertFailRepository(repository *model.Repository) error {
-	logger := GetLogger(nil)
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
 	_, err := MasterDB.ID(repository.PkId).Cols("failed_picture_num", "update_time").Update(repository)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("InsertRepository  error:", err)
+		log.Println("InsertRepository  error:", err)
 		session.Commit()
 		return err
 	}

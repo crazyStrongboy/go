@@ -12,9 +12,11 @@ type AlarmInfo struct {
 	AlarmImageContextPath    string
 	AlarmCropImageProperties string
 	AlarmCropImageUri        string
+	AlarmFaceRect            string
+	AlarmFaceProp            string
 	AlarmOrigImageId         int64
 	AlarmOrigImageUuid       string
-	AlarmOrigImageRectIdx    string
+	AlarmOrigImageRectIdx    string    `xorm:"-"`
 	AlarmOrigImageUri        string
 	AlarmScoreOthers         string
 	AlarmScore               float32
@@ -26,7 +28,8 @@ type AlarmInfo struct {
 	AlarmTmplScore3          float32
 	Timestamp                int64
 	ClusterId                int
-	CreateTime               time.Time `json:"create_time" xorm:"<-"`
+	CreateTime               time.Time `json:"create_time" xorm:"created"`
+	UpdateTime               time.Time `json:"update_time" xorm:"updated"`
 }
 
 func (self *AlarmInfo) TableName() string {

@@ -18,7 +18,7 @@ func (this *VerifyController) FaceVerify(req *restful.Request,res *restful.Respo
 	cacheMap:=utils.CacheMap{}
 	//判断用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&buz.VerifyReponse{}
 	if flag{
 		verify:=buz.VerifyRequest{}
@@ -39,10 +39,7 @@ func (this *VerifyController) FaceVerify(req *restful.Request,res *restful.Respo
 	}
 
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }

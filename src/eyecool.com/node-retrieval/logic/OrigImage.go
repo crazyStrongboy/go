@@ -34,6 +34,7 @@ func (OrigImageFullLogic) Insert(image *model.OrigImageFull) error {
 	_, err := MasterDB.Insert(image)
 	if err != nil {
 		session.Rollback()
+		session.Commit()
 		log.Println("insert image error:", err)
 		return err
 	}
@@ -49,5 +50,11 @@ func (this *OrigImageLogic) FindOrigImages(clusterId int, offset int, limit int)
 func (imageLogic *OrigImageLogic) FindOrigImageById(id int64) (bool, *model.OrigImageFull) {
 	origImage := new(model.OrigImageFull)
 	has, _ := MasterDB.Table(new(model.OrigImageFull).TableName()).ID(id).Get(origImage)
+	return has, origImage
+}
+
+func (imageLogic *OrigImageLogic) FindOrigImageByUUID(uuid string) (bool, *model.OrigImageFull) {
+	origImage := new(model.OrigImageFull)
+	has, _ := MasterDB.Table(new(model.OrigImageFull).TableName()).Where("uuid = ?",uuid).Get(origImage)
 	return has, origImage
 }

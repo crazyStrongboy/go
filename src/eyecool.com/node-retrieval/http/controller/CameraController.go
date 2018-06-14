@@ -25,10 +25,8 @@ func (this *CameraController)InsertCamera(req *restful.Request,res *restful.Resp
 	fmt.Println(req.Request.Header)
 	cacheMap:=utils.CacheMap{}
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
 	result:=&buz.InsertCameraResponse{}
 	if flag{
-		user:=cacheMap.GetUserSession(sessionId)
 		camera :=buz.CameraRequest{}
 		body, _ := ioutil.ReadAll(req.Request.Body)
 		err:=json.Unmarshal(body,&camera)
@@ -38,17 +36,14 @@ func (this *CameraController)InsertCamera(req *restful.Request,res *restful.Resp
 			result.Message="参数错误！"
 		}else{
 			//数据入库
-			result=buz.InsertCamera(&camera,user)
+			result=buz.InsertCamera(&camera)
 		}
 	}else{
 		result.Rtn=-1
 		result.Message="用户未登录！"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 
@@ -59,7 +54,7 @@ func (this *CameraController)CameraQuery(req *restful.Request,res *restful.Respo
 	sessionId:=req.HeaderParameter("session_id")
 	cacheMap:=utils.CacheMap{}
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&buz.CameraResponse{}
 	if flag{
 		//查询数据库
@@ -69,10 +64,7 @@ func (this *CameraController)CameraQuery(req *restful.Request,res *restful.Respo
 		result.Message="用户未登录"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }
@@ -82,22 +74,27 @@ func (this *CameraController)DeleteCamera(req *restful.Request,res *restful.Resp
 	sessionId:=req.HeaderParameter("session_id")
 	cacheMap:=utils.CacheMap{}
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&model.RespMsg{}
 	if flag{
 		m:=req.Request.URL.Query()
 		id:=m.Get("id")
 		fmt.Println(id)
+		if id == "" {
+			result.Rtn=-1
+			result.Message="id不能为空!"
+			SetResponse(res)
+			responseBytes, _ := json.Marshal(result)
+			res.ResponseWriter.Write(responseBytes)
+			return
+		}
 		result=buz.DeleteCamera(id)
 	}else{
 		result.Rtn=-1
 		result.Message="用户未登录"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }
@@ -107,7 +104,7 @@ func (this *CameraController)UpdateCamera(req *restful.Request,res *restful.Resp
 	sessionId:=req.HeaderParameter("session_id")
 	cacheMap:=utils.CacheMap{}
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&model.RespMsg{}
 	if flag{
 		camera :=buz.CameraRequest{}
@@ -126,10 +123,7 @@ func (this *CameraController)UpdateCamera(req *restful.Request,res *restful.Resp
 		result.Message="用户未登录"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }

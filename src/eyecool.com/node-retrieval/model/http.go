@@ -64,7 +64,7 @@ type LifecycleResponse struct {
 	Total int32  `protobuf:"varint,3,opt,name=total" json:"total,omitempty"`
 }
 
-type RespMsg struct{
-	Rtn int `json:"rtn"`
+type RespMsg struct {
+	Rtn     int    `json:"rtn"`
 	Message string `json:"message"`
 }

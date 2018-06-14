@@ -13,12 +13,12 @@ type Repository struct {
 	FailedPictureNum int
 	CreatorId        int
 	PermissionMap    string
-	ExtraMeta        string
+	ExtraMeta        string    `xorm:"extra_meta"`
 	Status           int
 	Options          string
 	ClusterId        int
-	UpdateTime  time.Time `json:"created_at" `
-	CreateTime  int64 `json:"created_at" `
+	UpdateTime       time.Time `json:"created_at" `
+	CreateTime       int64     `json:"created_at" `
 }
 
 func (self *Repository) TableName() string {

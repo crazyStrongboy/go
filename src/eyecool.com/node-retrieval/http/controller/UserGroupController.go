@@ -31,10 +31,9 @@ func (this *UserGroupController) InsertOrUpdateUserGroup(req *restful.Request, r
 		fmt.Println("InsertOrUpdateUserGroup Unmarshal userGroup err : ", err)
 		response.Rtn = -1
 		response.Message = err.Error()
-		rsp.Header().Set("Access-Control-Allow-Origin", "*")
-		rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-		rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-		rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
 		return
 	}
 	userGroup := new(model.UserGroup)
@@ -43,6 +42,7 @@ func (this *UserGroupController) InsertOrUpdateUserGroup(req *restful.Request, r
 		if err != nil {
 			response.Rtn = -1
 			response.Message = "id不正确!"
+			SetResponse(rsp)
 			responseBytes, _ := json.Marshal(response)
 			rsp.ResponseWriter.Write(responseBytes)
 			return
@@ -64,10 +64,7 @@ func (this *UserGroupController) InsertOrUpdateUserGroup(req *restful.Request, r
 		response.Message = "用户未登录!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }
@@ -86,10 +83,7 @@ func (this *UserGroupController) DeleteUserGroup(req *restful.Request, rsp *rest
 		response.Message = "用户未登录!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }

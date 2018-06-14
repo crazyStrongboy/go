@@ -4,6 +4,8 @@ import (
 	"eyecool.com/node-retrieval/model"
 	. "eyecool.com/node-retrieval/db"
 	"fmt"
+	"errors"
+	"log"
 )
 
 type PeopleLogic struct {
@@ -60,4 +62,12 @@ func (peopleLogic *PeopleLogic) FindByRetrieval(retrieval *model.Retrieval) []*m
 		fmt.Println(err)
 	}
 	return peoples
+}
+func (peopleLogic *PeopleLogic) UpdateStatusByRepositoryId(status int, repositoryId string) error {
+	_, err := MasterDB.Exec("update buz_people set status = ? where repository_id = ?", status, repositoryId)
+	if err != nil {
+		log.Println("UpdateStatusByRepositoryId buz_people err :",err)
+		return errors.New("删除people失败!")
+	}
+	return nil
 }

@@ -91,8 +91,8 @@ func RetrievalRepositoryFeatureInsert(ctx context.Context, req *model.RetrievalF
 }
 
 func InsertOrigImage(ctx context.Context, req *model.OrigImageRequest) error {
-	log.Println("Received Dispatch.InsertOrigImage request 2222222222222222 ", req)
-	image := &model.OrigImageFull{
+	log.Println("Received Dispatch.InsertOrigImage request 2222222222222222 ", req.CameraIp)
+	image := model.OrigImageFull{
 		Uuid:             req.Uuid,
 		CameraId:         req.CameraId,
 		ClusterId:        1,
@@ -107,7 +107,7 @@ func InsertOrigImage(ctx context.Context, req *model.OrigImageRequest) error {
 		FaceImageUri:     req.FaceImageUri,
 		UpdateTime:       time.Now(),
 	}
-	err := logic.DefaultOrigImageFull.Insert(image)
+	err := logic.DefaultOrigImageFull.Insert(&image)
 	if err != nil {
 		//rsp.Msg = global.FAILED
 	} else {

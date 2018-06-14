@@ -2,20 +2,24 @@ package main
 
 import (
 	"testing"
+	"github.com/emicklei/go-restful"
+	"log"
+	"net/http"
 )
 
 func TestHttp(t *testing.T) {
-	//wc := restful.NewContainer()
+	wc := restful.NewContainer()
 	//userController := new(controller.UserController)
 	//userGroupController := new(controller.UserGroupController)
 	//clusterController := new(controller.ClusterController)
 	//peopleController := new(controller.PeopleController)
 	//origController := new(controller.OrigImageController)
 	//retrievalController := new(controller.RetrievalController)
-	//ws1 := new(restful.WebService)
-	//ws1.Consumes(restful.MIME_XML, restful.MIME_JSON)
-	//ws1.Produces(restful.MIME_JSON, restful.MIME_XML)
-	//ws1.Path("/business/api")
+	alarmController := new(AlarmController)
+	ws1 := new(restful.WebService)
+	ws1.Consumes(restful.MIME_XML, restful.MIME_JSON)
+	ws1.Produces(restful.MIME_JSON, restful.MIME_XML)
+	ws1.Path("/business/api")
 	//ws1.Route(ws1.POST("/login").To(userController.GetSelf))
 	//ws1.Route(ws1.GET("/user/self").To(userController.GetSelfInfo))
 	//ws1.Route(ws1.GET("/user/top").To(userController.GetTopUserAndTopGroup))
@@ -32,9 +36,9 @@ func TestHttp(t *testing.T) {
 	//ws1.Route(ws1.POST("/capture/fetch").To(origController.GetCaptureImage))
 	//ws1.Route(ws1.POST("/single/image").To(origController.GetSingleImage))
 	//ws1.Route(ws1.POST("/retrieval").To(retrievalController.PictureSynchronized))
-	//
-	//wc.Add(ws1)
-	//log.Fatal(http.ListenAndServe("127.0.0.1:8081", wc))
+	ws1.Route(ws1.POST("/hit/alert").To(alarmController.HitAlert))
+	wc.Add(ws1)
+	log.Fatal(http.ListenAndServe("127.0.0.1:8081", wc))
 }
 
 func TestMD5(t *testing.T) {

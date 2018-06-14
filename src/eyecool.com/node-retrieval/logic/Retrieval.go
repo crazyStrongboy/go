@@ -21,7 +21,7 @@ func (self *RetrievalLogic) UpdateRetrievalById(retrieval *model.Retrieval) {
 	MasterDB.Table(new(model.Retrieval)).ID(retrieval.Id).Update(retrieval)
 }
 
-func (self *RetrievalLogic) SelectRetrievalById(retrievalId int64) (bool, *model.Retrieval) {
+func (self *RetrievalLogic) FindRetrievalById(retrievalId int64) (bool, *model.Retrieval) {
 	retrieval := new(model.Retrieval)
 	has, _ := MasterDB.Table(new(model.Retrieval)).ID(retrievalId).Get(retrieval)
 	return has, retrieval

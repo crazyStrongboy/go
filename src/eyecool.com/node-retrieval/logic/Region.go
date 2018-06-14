@@ -1,93 +1,96 @@
 package logic
 
-import( "eyecool.com/node-retrieval/model"
-. "eyecool.com/node-retrieval/db"
+import (
+	"eyecool.com/node-retrieval/model"
+	. "eyecool.com/node-retrieval/db"
+	"log"
 )
+
 type RegionLogic struct{}
 
-var DefaultRegion =RegionLogic{}
+var DefaultRegion = RegionLogic{}
 
 type Sets struct {
-	Id string `json:"id"`
-	Name string `json:"name"`
-	PermissionMap string `json:"permission_map"`
+	Id             string   `json:"id"`
+	Name           string   `json:"name"`
+	PermissionMap  string   `json:"permission_map"`
 	PredecessorIds []string `json:"predecessor_ids"`
 }
 
-func (RegionLogic)QueryRegion()([]*Sets,error){
-	objLog := GetLogger(nil)
-	sets:=make([]*Sets, 0)
+func (RegionLogic) QueryRegion() ([]*Sets, error) {
+	sets := make([]*Sets, 0)
 	cameras := make([]*model.Camera, 0)
 	err := MasterDB.Where("status!=0").Find(&cameras)
 	if err != nil {
-		objLog.Errorln("AdLogic FindAll PageAd error:", err)
-		return nil,err
+		log.Println("AdLogic FindAll PageAd error:", err)
+		return nil, err
 	}
-	for _,v:=range cameras{
-		set:=&Sets{}
-		set.Id=v.Id
-		set.Name=v.Name
-		set.PermissionMap=v.PermissionMap
-		set.PredecessorIds=DefaultCamera.GetRegionList(v.RegionId)
-		sets=append(sets, set)
+	for _, v := range cameras {
+		set := &Sets{}
+		set.Id = v.Id
+		set.Name = v.Name
+		set.PermissionMap = v.PermissionMap
+		set.PredecessorIds = DefaultCamera.FindRegionList(v.RegionId)
+		sets = append(sets, set)
 	}
-	return sets,nil
+	return sets, nil
 }
 
-func (RegionLogic)SelectByPrimaryKey(id int) model.Region{
-	region:=model.Region{}
-	MasterDB.Where("id=?",id).Get(&region)
-	return region
+func (RegionLogic) FindByPrimaryKey(id int)(bool, *model.Region ){
+	region := model.Region{}
+	has,err:=MasterDB.Where("id=?", id).Get(&region)
+	if err!=nil {
+		log.Println("FindByPrimaryKey region err : ",err)
+	}
+	return has,&region
 }
 
-func (RegionLogic)InsertRegion(region *model.Region)error{
-	logger := GetLogger(nil)
+func (RegionLogic) InsertRegion(region *model.Region) error {
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
-
 	_, err := MasterDB.Insert(region)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("insert region error:", err)
-		return  err
+		log.Println("insert region error:", err)
+		session.Commit()
+		return err
 	}
 	session.Commit()
 	return nil
 }
 
-func (RegionLogic) UpdateRegion(region *model.Region)error{
+func (RegionLogic) UpdateRegion(region *model.Region) error {
 	logger := GetLogger(nil)
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
-	_,err:=MasterDB.Where("id=?",region.Id).Update(region)
+	_, err := MasterDB.Where("id=?", region.Id).Update(region)
 	if err != nil {
 		session.Rollback()
 		logger.Errorln("update region error:", err)
-		return  err
+		return err
 	}
 	session.Commit()
 	return nil
 }
 
-func (RegionLogic) DeleteRegion(id int) error{
-	logger := GetLogger(nil)
+func (RegionLogic) DeleteRegion(id int) error {
 	session := MasterDB.NewSession()
 	defer session.Close()
 	session.Begin()
-	regions:=selectByParentId(id)
-	region:=&model.Region{
+	regions := findByParentId(id)
+	region := &model.Region{
 		Id:     id,
 		Status: 2,
 	}
-	_,err:=MasterDB.Where("id=?",region.Id).Update(region)
+	_, err := MasterDB.Where("id=?", region.Id).Update(region)
 	if err != nil {
 		session.Rollback()
-		logger.Errorln("update region error:", err)
-		return  err
+		log.Println("update region error:", err)
+		return err
 	}
-	for _,v:=range regions{
+	for _, v := range regions {
 		DefaultRegion.DeleteRegion(v.Id)
 	}
 
@@ -95,8 +98,8 @@ func (RegionLogic) DeleteRegion(id int) error{
 	return nil
 }
 
-func selectByParentId(parentId int) []*model.Region{
-	regions:=make([]*model.Region,0)
-	MasterDB.Where("parent_id=?",parentId).Find(&regions)
+func findByParentId(parentId int) []*model.Region {
+	regions := make([]*model.Region, 0)
+	MasterDB.Where("parent_id=?", parentId).Find(&regions)
 	return regions
 }

@@ -224,10 +224,9 @@ func (this *RetrievalController) PictureSynchronized(req *restful.Request, rsp *
 		response.Rtn = -1
 		response.Message = err.Error()
 
-		rsp.Header().Set("Access-Control-Allow-Origin", "*")
-		rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-		rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-		rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
 		return
 	}
 	sessionId := req.HeaderParameter("session_id")
@@ -239,10 +238,7 @@ func (this *RetrievalController) PictureSynchronized(req *restful.Request, rsp *
 		response.Message = "用户未登录!"
 	}
 
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
 	rsp.ResponseWriter.Write(responseBytes)
 }
@@ -257,10 +253,9 @@ func (this *RetrievalController) ConditionQuery(req *restful.Request, rsp *restf
 		fmt.Println("ConditionQuery Unmarshal  err : ", err, ":", request)
 		response.Rtn = -1
 		response.Message = err.Error()
-		rsp.Header().Set("Access-Control-Allow-Origin", "*")
-		rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-		rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-		rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
 		return
 	}
 	sessionId := req.HeaderParameter("session_id")
@@ -271,11 +266,7 @@ func (this *RetrievalController) ConditionQuery(req *restful.Request, rsp *restf
 		response.Rtn = -1
 		response.Message = "用户未登录!"
 	}
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
-
 	rsp.ResponseWriter.Write(responseBytes)
 }

@@ -4,12 +4,12 @@ import (
 	"github.com/satori/go.uuid"
 	"strings"
 	"fmt"
-	"github.com/polaris1119/logger"
 	"strconv"
 	"time"
 	"eyecool.com/node-retrieval/logic"
 	"eyecool.com/node-retrieval/model"
 	"eyecool.com/node-retrieval/utils"
+	"log"
 )
 
 type UserService struct {
@@ -33,7 +33,7 @@ func (this *UserService) Login(user *model.User) map[string]interface{} {
 	loginF := 0
 	logger := logic.GetLogger(nil)
 	if user != nil && user.Name != "" && user.Password != "" {
-		existUser, has, err := userLogic.SelectUserByName(user.Name)
+		existUser, has, err := userLogic.FindUserByName(user.Name)
 		if err != nil {
 			logger.Errorln("find user error:", err)
 			return nil
@@ -84,14 +84,14 @@ func (this *UserService) RespLoginResult(result map[string]interface{}) *UserRes
 func (this *UserService) GetTopUserAndTopGroup(user *model.User) *UserResponse {
 	response := new(UserResponse)
 	users := make([]*model.User, 0)
-	userGroups := userGroupLogic.SelectAllTopUserGroup(new(model.UserGroup))
+	userGroups := userGroupLogic.FindAllTopUserGroup(new(model.UserGroup))
 	if len(userGroups) > 0 {
 		for _, v := range userGroups {
-			ids := userGroupLogic.SelectPredecessorIds(v.ParentId)
+			ids := userGroupLogic.FindPredecessorIds(v.ParentId)
 			v.PredecessorIds = ids
-			userList, err := userLogic.SelectUsersByGroupId(v.Id)
+			userList, err := userLogic.FindUsersByGroupId(v.Id)
 			if err != nil {
-				fmt.Println("find user error:", err)
+				log.Println("find user error:", err)
 				continue
 			}
 			if len(userList) > 0 {
@@ -136,7 +136,7 @@ func (this *UserService) GetDepthUserAndUserGroup(idStr, depthStr, allStr string
 }
 func fillDepthInfoResult(id int, all int, depth int, response *UserResponse) {
 	fmt.Println("ididididididididididididididididididid", id)
-	has, groupLevel := userGroupLogic.SelectGroupLevelById(id)
+	has, groupLevel := userGroupLogic.FindGroupLevelById(id)
 	if !has {
 		response.Rtn = -1
 		response.Message = "该数据不存在!"
@@ -147,11 +147,11 @@ func fillDepthInfoResult(id int, all int, depth int, response *UserResponse) {
 		userGroups := make([]*model.UserGroup, 0)
 		users := make([]*model.User, 0)
 		for i := 0; i <= depth; i++ {
-			userGroupList := userGroupLogic.SelectUserGroupByLevel(groupLevel + i)
+			userGroupList := userGroupLogic.FindUserGroupByLevel(groupLevel + i)
 			for _, v := range userGroupList {
 				userGroups = append(userGroups, v)
 			}
-			userList := userLogic.SelectUserByLevel(groupLevel + i)
+			userList := userLogic.FindUserByLevel(groupLevel + i)
 			for _, v := range userList {
 				users = append(users, v)
 			}
@@ -162,8 +162,8 @@ func fillDepthInfoResult(id int, all int, depth int, response *UserResponse) {
 		response.Message = "查询成功!"
 	case 1:
 		groupLevel = groupLevel + depth
-		userGroupList := userGroupLogic.SelectUserGroupByLevel(groupLevel)
-		userList := userLogic.SelectUserByLevel(groupLevel)
+		userGroupList := userGroupLogic.FindUserGroupByLevel(groupLevel)
+		userList := userLogic.FindUserByLevel(groupLevel)
 		response.Sets = userGroupList
 		response.Users = userList
 		response.Rtn = 0
@@ -175,9 +175,15 @@ func fillDepthInfoResult(id int, all int, depth int, response *UserResponse) {
 }
 
 func (this *UserService) UpdateUser(user *model.User, response *UserResponse) {
+	has := userLogic.FindUserById(user.Id)
+	if !has {
+		response.Rtn = -1
+		response.Message = "该用户不存在!"
+		return
+	}
 	err := userLogic.UpdateUser(user)
 	if err != nil {
-		logger.Errorln("update user error:", err)
+		log.Println("update user error:", err)
 		response.Rtn = -1
 		response.Message = "update user error!"
 		return
@@ -187,11 +193,14 @@ func (this *UserService) UpdateUser(user *model.User, response *UserResponse) {
 }
 
 func (this *UserService) InsertUser(user *model.User, response *UserResponse) {
-	logger := logic.GetLogger(nil)
-	_, has, _ := userLogic.SelectUserByName(user.Name)
-	if has {
+	if user.Name == "" {
 		response.Rtn = -1
-		response.Message = "该用户已存在!"
+		response.Message = "name不能为空!"
+		return
+	}
+	if user.Password == "" {
+		response.Rtn = -1
+		response.Message = "密码不能为空!"
 		return
 	}
 	groupId, clusterId, err := utils.GetIdAndClusterId(user.Predecessor_id)
@@ -200,25 +209,38 @@ func (this *UserService) InsertUser(user *model.User, response *UserResponse) {
 		response.Message = "Predecessor_id不合格!"
 		return
 	}
-	fmt.Println("groupIdgroupIdgroupIdgroupIdgroupIdgroupIdgroupId", groupId)
-	has, globalLevel := userGroupLogic.SelectGroupLevelById(groupId)
-	user.Password = utils.MD5(user.Password)
-	user.UserLevel = globalLevel
-	user.UpdateTime = time.Now()
-	//user.ExtraMeta = user.Extra_meta
-	user.ClusterId = clusterId
-	user.Status = 0
-	user.CreateTime = time.Now().Unix()
-	err = userLogic.InsertUser(user)
-	if err != nil {
-		logger.Errorln("insert user error:", err)
+	_, has, _ := userLogic.FindUserByName(user.Name)
+	if has {
 		response.Rtn = -1
-		response.Message = "insert user error!"
+		response.Message = "该用户已存在!"
 		return
 	}
-	response.Rtn = 0
-	response.Id = strconv.Itoa(user.Id)
-	response.Message = "添加成功!"
+	fmt.Println("groupIdgroupIdgroupIdgroupIdgroupIdgroupIdgroupId", groupId)
+	has, globalLevel := userGroupLogic.FindGroupLevelById(groupId)
+	if has {
+		user.Password = utils.MD5(user.Password)
+		user.UserLevel = globalLevel
+		user.UpdateTime = time.Now()
+		//user.ExtraMeta = user.Extra_meta
+		user.ClusterId = clusterId
+		user.Status = 0
+		user.CreateTime = time.Now().Unix()
+		err = userLogic.InsertUser(user)
+		if err != nil {
+			log.Println("insert user error:", err)
+			response.Rtn = -1
+			response.Message = "insert user error!"
+			return
+		}
+		response.Rtn = 0
+		response.Id = strconv.Itoa(user.Id)
+		response.Message = "添加成功!"
+		return
+	}
+	response.Rtn = -1
+	response.Message = "用户组不存在,添加失败!"
+	return
+
 }
 
 func (this *UserService) DeleteUser(idStr string, response *UserResponse) {

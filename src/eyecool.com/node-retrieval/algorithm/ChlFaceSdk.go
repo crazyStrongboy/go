@@ -14,9 +14,11 @@ import (
 	"unsafe"
 	"sync/atomic"
 )
+
 const (
 	DefaultChannelNo = -1
 )
+
 type FACE_DETECT_RESULTX C.struct_FACE_DETECT_RESULT
 
 func (data *FACE_DETECT_RESULTX) SetRECT(left, top, right, bottom int) {
@@ -76,7 +78,7 @@ func (data *FACE_DETECT_RESULTX) GetMouth() C.struct_tagPOINT {
 
 func (data *FACE_DETECT_RESULTX) GetMouthX() POINTX {
 	var p C.struct_tagPOINT = C.struct_tagPOINT(data.ptMouth)
-	return  POINTX{int(p.x), int(p.y)}
+	return POINTX{int(p.x), int(p.y)}
 }
 
 func (data *FACE_DETECT_RESULTX) SetNose(p POINTX) {
@@ -90,7 +92,6 @@ func (data *FACE_DETECT_RESULTX) GetNoseX() POINTX {
 	var p C.struct_tagPOINT = C.struct_tagPOINT(data.ptNose)
 	return POINTX{int(p.x), int(p.y)}
 }
-
 
 func (data *FACE_DETECT_RESULTX) SetAttrs(nAngleYaw, nAnglePitch, nAngleRoll, nQuality int) {
 	data.nAngleYaw, data.nAnglePitch, data.nAngleRoll, data.nQuality = C.int(nAngleYaw), C.int(nAnglePitch), C.int(nAngleRoll), C.int(nQuality)
@@ -109,6 +110,14 @@ func (data *FACE_DETECT_RESULTX) GetFaceData() [512]C.char {
 	return data.FaceData
 }
 
+type FACE_PROPERTY_RESULTX struct {
+	Gender       int /* 性别: 1-male, 0-female */
+	Age          int /* 年龄 */
+	Race         int /* 种族: 0-未知, 1-白种人, 2-黄种人, 3-黑种人 */
+	SmileLevel   int /* 微笑程度: 0-100 */
+	BeautyLevel int /* 颜值: 0-100 */
+}
+
 type POINTX struct {
 	X, Y int
 }
@@ -117,10 +126,12 @@ type RECTX struct {
 	Left, Top, Right, Bottom int
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type ChlFaceX struct {
 	FaceMaxFeatureSize   int
 	MaxChannelNum        int
-	CallNum				 int32
+	CallNum              int32
 	LibPath              string
 	TmpDir               string
 	Handles              map[string]C.HANDLE
@@ -132,7 +143,7 @@ func NewChlFaceX() *ChlFaceX {
 	this := &ChlFaceX{
 		FaceMaxFeatureSize:   2600,
 		MaxChannelNum:        1,
-		CallNum       :       0,
+		CallNum:              0,
 		LibPath:              "/usr/local/lib",
 		TmpDir:               "/tmp",
 		Handles:              make(map[string]C.HANDLE),
@@ -183,7 +194,7 @@ func (this *ChlFaceX) ReadImageFile(path string, width, height int) (int, int, i
 
 func (this *ChlFaceX) ChlFaceSdkDetectFace(channelNo int, pRgb24 []byte, width, height int, isNoOnlyDetect bool) (hasFace int, pFaceResultx *FACE_DETECT_RESULTX) {
 	this.incr()
-	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo{
+	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo {
 		channelNo = int(this.CallNum) % this.MaxChannelNum
 	}
 	var pFaceResult *C.struct_FACE_DETECT_RESULT = nil
@@ -209,7 +220,7 @@ func (this *ChlFaceX) ChlFaceSdkFeatureGet(channelNo int, pRgb24 []byte, width i
 		return -9, nil
 	}
 	this.incr()
-	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo{
+	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo {
 		channelNo = int(this.CallNum) % this.MaxChannelNum
 	}
 	pFaceResult := makeC_FACE_DETECT_RESULT(pFaceResultX)
@@ -218,12 +229,49 @@ func (this *ChlFaceX) ChlFaceSdkFeatureGet(channelNo int, pRgb24 []byte, width i
 	return int(ret), pFeature
 }
 
+func (this *ChlFaceX) ChlFaceSdkFaceProperty(channelNo int, rgb24 []byte, width int, height int, faceNum int, faceResultXs []FACE_DETECT_RESULTX) (success int, facePropertyResult []FACE_PROPERTY_RESULTX) {
+	if faceResultXs == nil {
+		return -9, nil
+	}else if faceNum<=0 {
+		return -8, nil
+	}
+	this.incr()
+	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo {
+		channelNo = int(this.CallNum) % this.MaxChannelNum
+	}
+	var pFaceResultBuf []C.struct_FACE_DETECT_RESULT = make([]C.struct_FACE_DETECT_RESULT, 0, faceNum)
+	for i := 0; i < faceNum; i++ {
+		pFaceResult := makeC_FACE_DETECT_RESULT(&faceResultXs[i])
+		pFaceResultBuf = append(pFaceResultBuf, *pFaceResult)
+	}
+	var pFacePropertyBuf []C.struct_FACE_PROPERTY_RESULT = make([]C.struct_FACE_PROPERTY_RESULT, faceNum)
+	pRgb24 := (*C.BYTE)(unsafe.Pointer(&rgb24[0]))
+	pFaceResultBufx := (*C.struct_FACE_DETECT_RESULT)(unsafe.Pointer(&pFaceResultBuf[0]))
+	pFacePropertyBufx := (*C.struct_FACE_PROPERTY_RESULT)(unsafe.Pointer(&pFacePropertyBuf[0]))
+	ret := C.ChlFaceSdkFaceProperty(C.int(channelNo), (*C.BYTE)(pRgb24), C.int(width), C.int(height), C.int(faceNum), pFaceResultBufx, pFacePropertyBufx);
+	if ret == 0 {
+		facePropertyResult = make([]FACE_PROPERTY_RESULTX, 0, faceNum)
+		for i := 0; i < faceNum; i++ {
+			var property_result C.struct_FACE_PROPERTY_RESULT = pFacePropertyBuf[i]
+			property := FACE_PROPERTY_RESULTX{
+				Age:          int(property_result.nAge),
+				Gender:       int(property_result.nGender),
+				Race:         int(property_result.nRace),
+				SmileLevel:   int(property_result.nSmileLevel),
+				BeautyLevel: int(property_result.nBeautyLevel),
+			}
+			facePropertyResult = append(facePropertyResult, property)
+		}
+	}
+	return int(ret), facePropertyResult
+}
+
 func (this *ChlFaceX) ChlFaceSdkFeatureCompare(channelNo int, pFeature1 []byte, pFeature2 []byte) int {
 	if pFeature1 == nil || pFeature2 == nil {
 		return -9
 	}
 	this.incr()
-	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo{
+	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo {
 		channelNo = int(this.CallNum) % this.MaxChannelNum
 	}
 	var score C.BYTE = C.ChlFaceSdkFeatureCompare(C.int(0), (*C.BYTE)(unsafe.Pointer(&pFeature1[0])), (*C.BYTE)(unsafe.Pointer(&pFeature2[0])))
@@ -232,7 +280,7 @@ func (this *ChlFaceX) ChlFaceSdkFeatureCompare(channelNo int, pFeature1 []byte, 
 
 func (this *ChlFaceX) ChlFaceSdkDetectFaceExtractFeature(channelNo int, pRgb24 []byte, width int, height int, maxFace int, isDetectAndExtract int) (faceNum int, pFaceResultBufX []FACE_DETECT_RESULTX, pFeaturesBuf []byte) {
 	this.incr()
-	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo{
+	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo {
 		channelNo = int(this.CallNum) % this.MaxChannelNum
 	}
 	var faceResultBuf []C.struct_FACE_DETECT_RESULT = nil
@@ -257,13 +305,13 @@ func (this *ChlFaceX) ChlFaceSdkDetectFaceExtractFeature(channelNo int, pRgb24 [
 		}
 	}
 	if isDetectAndExtract == 2 {
-		pFeaturesBuf = pFeaturesBuf[0 : this.FaceMaxFeatureSize*faceNum]
+		pFeaturesBuf = pFeaturesBuf[0: this.FaceMaxFeatureSize*faceNum]
 	}
 	return faceNum, pFaceResultBufX, pFeaturesBuf
 }
 
 func (this *ChlFaceX) ChlFaceSdkListCreate(cacheName string, maxFeatureNum int) bool {
-	if  this.Handles[cacheName] == nil {
+	if this.Handles[cacheName] == nil {
 		this.Handles[cacheName] = C.ChlFaceSdkListCreate(C.int(maxFeatureNum))
 		this.HandlesCachedSize[cacheName] = 0
 		this.HandlesMaxCachedSize[cacheName] = maxFeatureNum
@@ -339,12 +387,12 @@ func (this *ChlFaceX) ChlFaceSdkListCompare(cacheName string, channelNo int, pFe
 		return -9, nil
 	}
 	this.incr()
-	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo{
+	if channelNo >= this.MaxChannelNum || channelNo == DefaultChannelNo {
 		channelNo = int(this.CallNum) % this.MaxChannelNum
 	}
 	if v, ok := this.Handles[cacheName]; ok && v != nil {
-		if(this.HandlesCachedSize[cacheName]==0){
-			return 0,nil
+		if (this.HandlesCachedSize[cacheName] == 0) {
+			return 0, nil
 		}
 		var SCORE []byte = make([]byte, this.HandlesCachedSize[cacheName])
 		SCORES := (*C.BYTE)(unsafe.Pointer(&SCORE[0]))

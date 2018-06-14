@@ -8,7 +8,7 @@ import (
 type ClusterLogic struct {
 }
 
-func (this *ClusterLogic) GetClusterArray() []int {
+func (this *ClusterLogic) FindClusters() []int {
 	clusterIntIds := make([]int, 0)
 	MasterDB.Table(new(model.Cluster)).Cols("id").Find(&clusterIntIds)
 	return clusterIntIds

@@ -4,6 +4,8 @@ import (
 	"eyecool.com/node-retrieval/model"
 	. "eyecool.com/node-retrieval/db"
 	"fmt"
+	"errors"
+	"log"
 )
 
 type FaceFeatureLogic struct{}
@@ -24,8 +26,17 @@ func (FaceFeatureLogic) FindFaceFeaturesByRepositoryId(repositoryId string) []*m
 func (this *FaceFeatureLogic) FindFaceFeatureByPkId(pkId int) (bool, *model.FaceFeature) {
 	feature := new(model.FaceFeature)
 	has, err := MasterDB.ID(int64(pkId)).Get(feature)
-	if err!=nil {
+	if err != nil {
 		fmt.Println(err)
+	}
+	return has, feature
+}
+
+func (this *FaceFeatureLogic) FindFaceFeatureByFaceImageId(faceImageId string) (bool, *model.FaceFeature) {
+	feature := new(model.FaceFeature)
+	has, err := MasterDB.Where("face_image_id = ?", faceImageId).Get(feature)
+	if err != nil {
+		fmt.Println("FindFaceFeatureByFaceImageId err: ", err)
 	}
 	return has, feature
 }
@@ -60,4 +71,12 @@ func (featureLogic *FaceFeatureLogic) FindFaceFeatureByPeopleId(peopleId int64) 
 	faceFeature := new(model.FaceFeature)
 	has, _ := MasterDB.Table(faceFeature.TableName()).Where("people_id = ?", peopleId).Get(faceFeature)
 	return has, faceFeature
+}
+func (featureLogic *FaceFeatureLogic) UpdateStatusByRepositoryId(status int, repositoryId string) error {
+	_, err := MasterDB.Exec("update buz_face_feature set status = ? where repository_id = ?", status, repositoryId)
+	if err != nil {
+		log.Println("UpdateStatusByRepositoryId buz_face_feature err: ", err)
+		return errors.New("删除feature失败!")
+	}
+	return nil
 }

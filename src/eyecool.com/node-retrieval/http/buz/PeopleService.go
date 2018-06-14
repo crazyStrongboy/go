@@ -13,29 +13,34 @@ import (
 	"io/ioutil"
 	"eyecool.com/node-retrieval/algorithm"
 	. "github.com/polaris1119/config"
+	"log"
+	"eyecool.com/node-retrieval/global"
+	"encoding/json"
+	"errors"
 )
 
 var (
 	people_target_path = "/home/eyecool/imageSavePath/tempImage/"
 	nginx_path         = "http://192.168.0.192/"
+	task_url = "http://192.168.0.192:8091/surveillance/api/task/lifecycle"
 )
 
 type PeopleService struct {
 }
 
 // {"x": 左上角x坐标, "y": 左上角y坐标, "w": 宽度, "h": 高度}
-type Rect struct {
-	X int `json:"x"`
-	Y int `json:"y"`
-	H int `json:"h"`
-	W int `json:"w"`
-}
+//type Rect struct {
+//	X int `json:"x"`
+//	Y int `json:"y"`
+//	T int `json:"t"`
+//	B int `json:"b"`
+//}
 
 //表示图片入库的结果
 type Result struct {
-	FaceImageId  string `json:"face_image_id,omitempty"`  //此人入库后的 id ($编号@$集群号)
-	FaceImageUri string `json:"face_image_uri,omitempty"` //此人人脸图片的 uri，在单集群接口的基础上加上 "@$集群号
-	FaceRecg     *Rect  `json:"face_recg,omitempty"`      //表示人脸在原图中的位置, {"x": 左上角x坐标, "y": 左上角y坐标, "w": 宽度, "h": 高度}
+	FaceImageId  string      `json:"face_image_id,omitempty"`  //此人入库后的 id ($编号@$集群号)
+	FaceImageUri string      `json:"face_image_uri,omitempty"` //此人人脸图片的 uri，在单集群接口的基础上加上 "@$集群号
+	FaceRecg     *model.Rect `json:"face_recg,omitempty"`      //表示人脸在原图中的位置, {"x": 左上角x坐标, "y": 左上角y坐标, "w": 宽度, "h": 高度}
 }
 
 type PeopleResponse struct {
@@ -59,7 +64,7 @@ type PeopleRequest struct {
 	Region                       int         //区域编号
 	Birthday                     string      //出生日期。格式为"YYYY-mm-dd"， 比如"1990-10-10
 	Gender                       int         //性别。0未知, 1男, 2女
-	Nation                       int      //民族, 见 , 0表示未知
+	Nation                       int         //民族, 见 , 0表示未知
 	Person_id                    string      //证件号可以是18位身份证号或者其他格式的证件号码
 	Options                      string      //建库选项
 	Custom_field                 string      //导图时添加任意多的额外自定义字段。
@@ -68,8 +73,19 @@ type PeopleRequest struct {
 }
 
 func init() {
-	people_target_path, _ = ConfigFile.GetValue("path", "people_target_path")
-	nginx_path, _ = ConfigFile.GetValue("path", "nginx_path")
+	var err error
+	people_target_path, err = ConfigFile.GetValue("path", "people_target_path")
+	if err != nil {
+		log.Fatalf("#################path people_target_path is not correct!!")
+	}
+	nginx_path, err = ConfigFile.GetValue("path", "nginx_path")
+	if err != nil {
+		log.Fatalf("#################path nginx_path is not correct!!")
+	}
+	task_url,err = ConfigFile.GetValue("path", "task_url")
+	if err != nil {
+		log.Fatalf("#################path task_url is not correct!!")
+	}
 }
 
 var peopleLogic = new(logic.PeopleLogic)
@@ -91,12 +107,16 @@ func (this *PeopleService) Insert(request *PeopleRequest, userId int) *PeopleRes
 		}
 		people.RepositoryId = request.Repository_id
 		var has bool
-		has, repository = repositoryLogic.SelectByPrimaryKey(repositoryPkId)
+		has, repository = repositoryLogic.FindByPrimaryKey(repositoryPkId)
 		if !has || (has && repository.Status == 1) {
 			response.Rtn = -1
 			response.Message = "库不存在!"
 			return response
 		}
+	}else{
+		response.Rtn = -1
+		response.Message = "库id不能为空!"
+		return response
 	}
 	people.ClusterId = clusterId
 	people.RepositoryPkId = repositoryPkId
@@ -167,6 +187,11 @@ func (this *PeopleService) Update(request *PeopleRequest) *PeopleResponse {
 func (this *PeopleService) Delete(request *PeopleRequest) *PeopleResponse {
 	response := new(PeopleResponse)
 	faceImageId := request.Face_image_id
+	if faceImageId == "" {
+		response.Rtn = -1
+		response.Message = "faceImageId不能为空!"
+		return response
+	}
 	faceId, _, err := utils.GetIdAndClusterId(faceImageId)
 	if err != nil || faceId == -2 {
 		response.Rtn = -1
@@ -242,8 +267,13 @@ func writeFileToDiskAndDetect(request *PeopleRequest, repository *model.Reposito
 		return response, err
 	}
 	//检测是否有人脸
-	_, width, height, rgb24Data := algorithm.NewChlFaceX().ReadImageFile(realPath, 0, 0)
-	hasFace, faceResult := algorithm.NewChlFaceX().ChlFaceSdkDetectFace(0, rgb24Data, width, height, true)
+	ret, width, height, rgb24Data := global.G_ChlFaceX.ReadImageFile(realPath, 0, 0)
+	if ret != 0 {
+		response.Rtn = -1
+		response.Message = "请传入正确的文件!"
+		return response, errors.New("请传入正确的文件")
+	}
+	hasFace, faceResult := global.G_ChlFaceX.ChlFaceSdkDetectFace(0, rgb24Data, width, height, true)
 	fmt.Println("width:", width, "height:", height, "hasFace:", hasFace)
 	if hasFace == 0 || faceResult == nil {
 		//检测不到人脸
@@ -328,27 +358,51 @@ func insertPeople(request *PeopleRequest, people *model.People) (*model.People, 
 
 //提取特征并入库
 func extractFeatureAndInsert(data []byte, faceResult *algorithm.FACE_DETECT_RESULTX, people *model.People, image *model.Image, width int, height int) (*PeopleResponse) {
-	_, feature := algorithm.NewChlFaceX().ChlFaceSdkFeatureGet(0, data, width, height, faceResult)
+	_, feature := global.G_ChlFaceX.ChlFaceSdkFeatureGet(0, data, width, height, faceResult)
+	success, facePropertys := global.G_ChlFaceX.ChlFaceSdkFaceProperty(0, data, width, height, 1, []algorithm.FACE_DETECT_RESULTX{*faceResult})
+	prop := model.Prop{}
+	if success == 0 {
+		faceProperty := facePropertys[0]
+		prop = model.Prop{
+			Age:         faceProperty.Age,
+			Gender:      faceProperty.Gender,
+			Race:        faceProperty.Race,
+			SmileLevel:  faceProperty.SmileLevel,
+			BeautyLevel: faceProperty.BeautyLevel,
+		}
+	} else {
+		log.Println("extractFeatureAndInsert ChlFaceSdkFaceProperty ret :", success)
+	}
 	response := new(PeopleResponse)
 	rect := faceResult.GetRECT()
-	responseRect := new(Rect)
+	responseRect := new(model.Rect)
 	responseRect.X = rect.Left
 	responseRect.Y = rect.Right
-	responseRect.W = rect.Top
-	responseRect.H = rect.Bottom
+	responseRect.T = rect.Top
+	responseRect.B = rect.Bottom
 	featBase64 := base64.StdEncoding.EncodeToString(feature)
-	insertAndUpdateFeature(featBase64, responseRect, image, people, response)
+	insertAndUpdateFeature(featBase64, responseRect, &prop, image, people, response)
 	return response
 }
-func insertAndUpdateFeature(featBase64 string, rect *Rect, image *model.Image, people *model.People, response *PeopleResponse) {
+func insertAndUpdateFeature(featBase64 string, rect *model.Rect, prop *model.Prop, image *model.Image, people *model.People, response *PeopleResponse) {
 	faceFeature := new(model.FaceFeature)
 	faceFeature.Feat = featBase64
 	faceFeature.CreateTime = time.Now()
 	faceFeature.UpdateTime = time.Now()
-	faceFeature.W = rect.W
+	rectByte, err1 := json.Marshal(rect)
+	if err1 != nil {
+		log.Println("insertAndUpdateFeature marshal rect error : ", err1)
+	}
+	faceFeature.FaceRect = string(rectByte)
+	propByte, err2 := json.Marshal(prop)
+	if err2 != nil {
+		log.Println("insertAndUpdateFeature marshal prop error : ", err2)
+	}
+	faceFeature.FaceProp = string(propByte)
+	faceFeature.W = rect.T
 	faceFeature.X = rect.X
 	faceFeature.Y = rect.Y
-	faceFeature.H = rect.H
+	faceFeature.H = rect.B
 	faceFeature.ImageId = image.Id
 	faceFeature.PeopleId = people.Id
 	faceFeature.RepositoryPkId = people.RepositoryPkId
@@ -398,6 +452,7 @@ func insertImageFail(request *PeopleRequest, clusterId int, userId int, imageNam
 	imageFail.PersonId = request.Person_id
 	imageFail.Region = request.Region
 	imageFail.RepositoryId = request.Repository_id
+	imageFail.FailCode = 1 //默认给1
 	err := imageFailLogic.Insert(imageFail)
 	return err
 }

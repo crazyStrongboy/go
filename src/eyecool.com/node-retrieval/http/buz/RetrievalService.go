@@ -53,23 +53,23 @@ type RetrievalResponse struct {
 	Results          []*RetrievalResult `json:"results,omitempty"`
 }
 type RetrievalResult struct {
-	Annotation     int    `json:"annotation"`
-	FaceImageId    string `json:"face_image_id,omitempty"` //过人id($编号@$集群号)
-	FaceImageIdStr string `json:"face_image_id_str,omitempty"`
-	FaceImageUri   string `json:"face_image_uri,omitempty"` //人脸图URI
-	PictureUri     string `json:"picture_uri,omitempty"`    //场景图URI
-	FaceRect       *Rect  `json:"face_rect,omitempty"`      //人脸框
-	Timestamp      int64  `json:"timestamp,omitempty"`      //过人的时间戳
-	BornYear       string `json:"born_year,omitempty"`
-	Gender         int    `json:"gender,omitempty"`
-	IsWritable     bool   `json:"is_writable,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Nation         int `json:"nation"`
-	PersonId       string `json:"person_id,omitempty"`
-	CustomField    string `json:"custom_field,omitempty"`
-	RepositoryId   string `json:"repository_id,omitempty"`
-	Similarity     int    `json:"similarity,omitempty"`
-	CameraId       string `json:"camera_id,omitempty"` //摄像头编号 ($编号@$集群号)
+	Annotation     int         `json:"annotation"`
+	FaceImageId    string      `json:"face_image_id,omitempty"` //过人id($编号@$集群号)
+	FaceImageIdStr string      `json:"face_image_id_str,omitempty"`
+	FaceImageUri   string      `json:"face_image_uri,omitempty"` //人脸图URI
+	PictureUri     string      `json:"picture_uri,omitempty"`    //场景图URI
+	FaceRect       *model.Rect `json:"face_rect,omitempty"`      //人脸框
+	Timestamp      int64       `json:"timestamp,omitempty"`      //过人的时间戳
+	BornYear       string      `json:"born_year,omitempty"`
+	Gender         int         `json:"gender,omitempty"`
+	IsWritable     bool        `json:"is_writable,omitempty"`
+	Name           string      `json:"name,omitempty"`
+	Nation         int         `json:"nation"`
+	PersonId       string      `json:"person_id,omitempty"`
+	CustomField    string      `json:"custom_field,omitempty"`
+	RepositoryId   string      `json:"repository_id,omitempty"`
+	Similarity     int         `json:"similarity,omitempty"`
+	CameraId       string      `json:"camera_id,omitempty"` //摄像头编号 ($编号@$集群号)
 }
 type Order struct {
 	Similarity int
@@ -126,11 +126,64 @@ var retrievalUitLogic = new(logic.RetrievalUnitLogic)
 
 //人脸检索
 func (this *RetrievalService) InsertAndRetrieval(request *RetrievalRequest) *RetrievalResponse {
-	response := new(RetrievalResponse)
+	response := judgeRetrievalRequestParams(request)
+	if response.Rtn != 0 {
+		return response
+	}
 	if request.Retrieval_query_id == "" { //新查询
 		response = insertAndRequestRetrieval(request)
 	} else { //查询缓存
 		response = queryCacheById(request)
+	}
+	return response
+}
+func judgeRetrievalRequestParams(request *RetrievalRequest) *RetrievalResponse {
+	response := new(RetrievalResponse)
+	if request.Start == 0 {
+		response.Rtn = -1
+		response.Message = "start必须大于0!"
+		return response
+	}
+	if request.Limit == 0 {
+		response.Rtn = -1
+		response.Message = "limit必须大于0!"
+		return response
+	}
+
+	if request.Order == "" || request.Order == nil {
+		response.Rtn = -1
+		response.Message = "order不能为空!"
+		return response
+	}
+
+	if request.Condition == nil {
+		response.Rtn = -1
+		response.Message = "condition不能为空!"
+		return response
+	}
+
+	if request.Retrieval == nil {
+		response.Rtn = -1
+		response.Message = "retrieval不能为空!"
+		return response
+	}
+
+	if request.Retrieval != nil {
+		if request.Retrieval.Repository_ids == nil && request.Retrieval.Camera_ids == nil && request.Retrieval.Video_ids == nil {
+			response.Rtn = -1
+			response.Message = "repository_ids camera_ids video_ids必须三选一!"
+			return response
+		}
+		if request.Retrieval.Threshold == 0 {
+			response.Rtn = -1
+			response.Message = "相似度分数线必须>0!"
+			return response
+		}
+		if request.Retrieval.Face_image_id == "" {
+			response.Rtn = -1
+			response.Message = "face_image_id不能为空!"
+			return response
+		}
 	}
 	return response
 }
@@ -225,12 +278,8 @@ func fillConditionRetrievalResult(peoples []*model.People) RetrievalResults {
 			}
 			hasF, feature := featureLogic.FindFaceFeatureByPeopleId(people.Id) //仅针对一个图片一张人脸的情况
 			if hasF {
-				result.FaceRect = &Rect{
-					X: feature.X,
-					Y: feature.Y,
-					H: feature.H,
-					W: feature.W,
-				}
+				rect := new(model.Rect)
+				json.Unmarshal([]byte(feature.FaceRect), rect)
 				hasI, image := imageLogic.FindImageById(feature.ImageId)
 				if hasI {
 					result.PictureUri = image.ImageUrl + "@" + strconv.Itoa(image.ClusterId)
@@ -334,8 +383,8 @@ func insertRetrieval(feature *model.FaceFeature, request *RetrievalRequest) *Ret
 		//调用Go接口进行检索
 		msg := sendToGoRetrieval(retrievalParam, retrieval)
 		if "success" == msg.Msg {
-			time.Sleep(1*time.Second)
-			_, retrievalExsit := retrievalLogic.SelectRetrievalById(retrieval.Id)
+			time.Sleep(1 * time.Second)
+			_, retrievalExsit := retrievalLogic.FindRetrievalById(retrieval.Id)
 			fmt.Println(retrievalExsit)
 			response.Rtn = 0
 			response.Message = "检索成功"
@@ -347,7 +396,7 @@ func insertRetrieval(feature *model.FaceFeature, request *RetrievalRequest) *Ret
 			}
 			if retrievalParam.CameraParam != "" {
 				results := pushCameraSnapshotResults(retrievalExsit, similarity)
-				_, retrievalExsit = retrievalLogic.SelectRetrievalById(retrieval.Id)  //再次获取total记录数
+				_, retrievalExsit = retrievalLogic.FindRetrievalById(retrieval.Id) //再次获取total记录数
 				response.Total = retrievalExsit.Total
 				response.Results = results
 			}
@@ -415,7 +464,7 @@ func queryCacheById(request *RetrievalRequest) *RetrievalResponse {
 		response.Message = "Retrieval_query_id不正确!"
 		return response
 	}
-	has, retrieval := retrievalLogic.SelectRetrievalById(int64(retrievalId))
+	has, retrieval := retrievalLogic.FindRetrievalById(int64(retrievalId))
 	if !has {
 		response.Rtn = -1
 		response.Message = "未查询到此记录：" + request.Retrieval_query_id
@@ -517,7 +566,7 @@ func fillCameraRetrievalResult(resultInfos *ResultInfos, similarity int) Retriev
 			if hasO {
 				_, clusterId, _ := utils.GetIdAndClusterId(origImage.CameraId)
 				rectStr := origImage.FaceRect
-				rect := &Rect{}
+				rect := &model.Rect{}
 				json.Unmarshal([]byte(rectStr), rect)
 				retrievalResult := &RetrievalResult{
 					CameraId:       origImage.CameraId,
@@ -551,7 +600,7 @@ func pushResults(retrieval *model.Retrieval, similarity int) []*RetrievalResult 
 		if cameraIds != "" {
 			json.Unmarshal([]byte(cameraIds), &keys)
 		}
-		fmt.Println("pushResults ------------------- keys:", keys, "repositoryIds:", repositoryIds,"results:",results)
+		fmt.Println("pushResults ------------------- keys:", keys, "repositoryIds:", repositoryIds, "results:", results)
 		resultInfos = getResultAndSort(results, keys);
 		if len(*resultInfos) > 0 {
 			retrieval.Total = len(*resultInfos)
@@ -570,12 +619,12 @@ func pushResults(retrieval *model.Retrieval, similarity int) []*RetrievalResult 
 
 	//分页返回值
 	*resultInfos = getStartLimit(resultInfos, retrieval)
-	fmt.Println("pushResults resultInfos:",*resultInfos,"长度是:",len(*resultInfos))
+	fmt.Println("pushResults resultInfos:", *resultInfos, "长度是:", len(*resultInfos))
 
 	//填充结果
 	retrievalResults = fillRetrievalResults(resultInfos, similarity)
 
-	fmt.Println("pushResults retrievalResults:",retrievalResults)
+	fmt.Println("pushResults retrievalResults:", retrievalResults)
 
 	return retrievalResults
 }
@@ -585,7 +634,7 @@ func fillRetrievalResults(resultInfos *ResultInfos, similarity int) RetrievalRes
 	retrievalResults := RetrievalResults{}
 	if len(*resultInfos) > 0 {
 		for _, result := range *resultInfos {
-			fmt.Println("fillRetrievalResults result :",result)
+			fmt.Println("fillRetrievalResults result :", result)
 			faceImageIdStr := result.Tmpl.FaceImageId
 			faceImageId, _, err := utils.GetIdAndClusterId(faceImageIdStr)
 			if err != nil || faceImageId == -2 {
@@ -597,27 +646,24 @@ func fillRetrievalResults(resultInfos *ResultInfos, similarity int) RetrievalRes
 				hasI, image := imageLogic.FindImageById(feature.ImageId)
 				hasP, people := peopleLogic.FindPeopleById(feature.PeopleId)
 				if hasI && hasP {
+					rect := new(model.Rect)
+					json.Unmarshal([]byte(feature.FaceRect), rect)
 					retrievalResult := &RetrievalResult{
 						Annotation:     0,
 						FaceImageId:    feature.FaceImageId,
 						FaceImageIdStr: feature.FaceImageId,
 						BornYear:       people.Birthday,
 						FaceImageUri:   image.ImageUrl + "@" + strconv.Itoa(image.ClusterId),
-						FaceRect: &Rect{
-							X: feature.X,
-							Y: feature.Y,
-							H: feature.H,
-							W: feature.W,
-						},
-						Gender:       people.Gender,
-						IsWritable:   false,
-						Name:         people.Name,
-						Nation:       people.Nation,
-						PictureUri:   image.ImageUrl + "@" + strconv.Itoa(image.ClusterId),
-						RepositoryId: people.RepositoryId,
-						Timestamp:    time.Now().Unix(),
-						PersonId:     people.PersonId,
-						Similarity:   similarity,
+						FaceRect:       rect,
+						Gender:         people.Gender,
+						IsWritable:     false,
+						Name:           people.Name,
+						Nation:         people.Nation,
+						PictureUri:     image.ImageUrl + "@" + strconv.Itoa(image.ClusterId),
+						RepositoryId:   people.RepositoryId,
+						Timestamp:      time.Now().Unix(),
+						PersonId:       people.PersonId,
+						Similarity:     similarity,
 					}
 					retrievalResults = append(retrievalResults, retrievalResult)
 				}

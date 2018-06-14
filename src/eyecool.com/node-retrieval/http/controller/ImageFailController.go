@@ -23,10 +23,33 @@ func (this *ImageFailController) GetFailImage(req *restful.Request, rsp *restful
 		fmt.Println("GetFailImage Unmarshal  err : ", err, ":", request)
 		response.Rtn = -1
 		response.Message = err.Error()
-		rsp.Header().Set("Access-Control-Allow-Origin", "*")
-		rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-		rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-		rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
+		return
+	}
+	if request.Repository_id == "" {
+		response.Rtn = -1
+		response.Message = "repository_id不能为空!"
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
+		return
+	}
+
+	if request.Start == 0 {
+		response.Rtn = -1
+		response.Message = "start不能为空!"
+		SetResponse(rsp)
+		responseBytes, _ := json.Marshal(response)
+		rsp.ResponseWriter.Write(responseBytes)
+		return
+	}
+
+	if request.Limit == 0 {
+		response.Rtn = -1
+		response.Message = "limit不能为空!"
+		SetResponse(rsp)
 		responseBytes, _ := json.Marshal(response)
 		rsp.ResponseWriter.Write(responseBytes)
 		return
@@ -39,10 +62,7 @@ func (this *ImageFailController) GetFailImage(req *restful.Request, rsp *restful
 		response.Rtn = -1
 		response.Message = "用户未登录!"
 	}
+	SetResponse(rsp)
 	responseBytes, _ := json.Marshal(response)
-	rsp.Header().Set("Access-Control-Allow-Origin", "*")
-	rsp.Header().Set("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT")
-	rsp.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	rsp.Header().Set("Access-Control-Max-Age", "1800"); //30 min
 	rsp.ResponseWriter.Write(responseBytes)
 }

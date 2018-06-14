@@ -20,7 +20,7 @@ func (this *VideoController)QueryVideo(req *restful.Request,res *restful.Respons
 	result:=&buz.VideoResponse{}
 	//判断用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	if flag{
 		//查询数据库
 		result=buz.QueryVideo()
@@ -30,10 +30,7 @@ func (this *VideoController)QueryVideo(req *restful.Request,res *restful.Respons
 
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 
@@ -45,7 +42,7 @@ func (this *VideoController)InsertVideo(req *restful.Request,res *restful.Respon
 	cacheMap:=utils.CacheMap{}
 	//检查用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&buz.InsertVideoResponse{}
 	if flag{
 		v:=buz.VideoRequest{}
@@ -65,10 +62,7 @@ func (this *VideoController)InsertVideo(req *restful.Request,res *restful.Respon
 		result.Message="用户未登录"
 	}
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }
@@ -80,7 +74,7 @@ func (this *VideoController)UpdateVideo(req *restful.Request,res *restful.Respon
 	cacheMap:=utils.CacheMap{}
 	//检查用户是否登陆
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&model.RespMsg{}
 	if flag{
 		r:=buz.VideoRequest{}
@@ -100,10 +94,7 @@ func (this *VideoController)UpdateVideo(req *restful.Request,res *restful.Respon
 	}
 
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 
@@ -114,7 +105,7 @@ func (this *VideoController) DeleteVideo(req *restful.Request,res *restful.Respo
 	sessionId:=req.HeaderParameter("session_id")
 	cacheMap:=utils.CacheMap{}
 	flag:=cacheMap.CheckSession(sessionId)
-	flag=true
+	//flag=true
 	result:=&model.RespMsg{}
 	if flag{
 		m:=req.Request.URL.Query()
@@ -128,10 +119,7 @@ func (this *VideoController) DeleteVideo(req *restful.Request,res *restful.Respo
 	}
 
 	fmt.Println(req.Request.Method)
-	res.Header().Set("Access-Control-Allow-Origin","*")
-	res.Header().Set("Access-Control-Allow-Methods","POST,GET,DELETE,PUT")
-	res.Header().Set("Access-Control-Allow-Headers", "x-requested-with");
-	res.Header().Set("Access-Control-Max-Age", "1800");//30 min
+	SetResponse(res)
 	responseBytes, _ := json.Marshal(result)
 	res.ResponseWriter.Write(responseBytes)
 }
