@@ -27,7 +27,7 @@
 
 12. 描述程序的状态: info
 
-    ![gdb_info](http://images.hcyhj.cn/golearner/gdb_info.png)
+    ![gdb_info](../images/gdb_info.png)
 
 13. 终止正在调试的程序: kill ===>快捷键:k
 
